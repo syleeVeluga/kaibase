@@ -28,7 +28,8 @@
     "createAccount": "계정 만들기",
     "archive": "보관",
     "back": "뒤로",
-    "view": "보기"
+    "view": "보기",
+    "retry": "다시 시도"
   },
   "auth": {
     "signInTitle": "계정에 로그인",

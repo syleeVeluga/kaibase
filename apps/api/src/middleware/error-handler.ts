@@ -1,5 +1,6 @@
 import type { ErrorHandler } from 'hono';
 import { logger } from '../logger.js';
+import { mapDbError } from './db-errors.js';
 
 export interface ApiError {
   code: string;
@@ -24,6 +25,14 @@ export const errorHandler: ErrorHandler = (err, c) => {
     return c.json<ApiError>(
       { code: err.code, message: err.message, details: err.details },
       err.statusCode as 400,
+    );
+  }
+
+  const dbError = mapDbError(err);
+  if (dbError) {
+    return c.json<ApiError>(
+      { code: dbError.code, message: dbError.message },
+      dbError.status as 400,
     );
   }
 

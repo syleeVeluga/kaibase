@@ -10,5 +10,17 @@
   "policyVersionNotFound": "Policy version not found",
   "policyEvaluationFailed": "Policy evaluation failed",
   "invalidInput": "Invalid input",
-  "slugTaken": "A workspace with this slug already exists"
+  "slugTaken": "A workspace with this slug already exists",
+  "pageSlugTaken": "A page with this URL slug already exists",
+  "duplicateSource": "This source has already been added",
+  "duplicate": "This item already exists",
+  "invalidReference": "A referenced item does not exist",
+  "llmUnavailable": "AI service is temporarily unavailable. Please try again.",
+  "fetchFailed": "Failed to load data",
+  "policyBlocked": "This action is blocked by workspace policy",
+  "notWorkspaceMember": "You are not a member of this workspace",
+  "missingFile": "Please select a file to upload",
+  "fileTooLarge": "File is too large (max 100 MB)",
+  "unsupportedConnector": "This connector type is not yet supported",
+  "invalidConnectorConfig": "Connector configuration is invalid"
 }

@@ -18,41 +18,34 @@ workspaceRoutes.post('/', zValidator('json', createWorkspaceSchema), async (c) =
   const user = c.get('user');
   const id = generateId();
 
-  try {
-    await db.transaction(async (tx) => {
-      await tx.insert(workspaces).values({
-        id,
-        name: input.name,
-        slug: input.slug,
-        description: input.description ?? null,
-        defaultLanguage: input.defaultLanguage,
-      });
-      await tx.insert(workspaceMembers).values({
-        workspaceId: id,
-        userId: user.userId,
-        role: 'owner',
-      });
-
-      // Seed default policy pack for new workspace
-      const packId = generateId();
-      const defaultPack = getDefaultPolicyPack(id, packId);
-      await tx.insert(policyPacks).values({
-        id: packId,
-        workspaceId: id,
-        name: defaultPack.name,
-        version: defaultPack.version,
-        isActive: true,
-        rules: defaultPack.rules,
-        defaultOutcome: defaultPack.defaultOutcome,
-        createdBy: user.userId,
-      });
+  await db.transaction(async (tx) => {
+    await tx.insert(workspaces).values({
+      id,
+      name: input.name,
+      slug: input.slug,
+      description: input.description ?? null,
+      defaultLanguage: input.defaultLanguage,
     });
-  } catch (err: unknown) {
-    if (err instanceof Error && err.message.includes('workspaces_slug_unique')) {
-      throw new AppError(409, 'SLUG_TAKEN', 'errors.slugTaken');
-    }
-    throw err;
-  }
+    await tx.insert(workspaceMembers).values({
+      workspaceId: id,
+      userId: user.userId,
+      role: 'owner',
+    });
+
+    // Seed default policy pack for new workspace
+    const packId = generateId();
+    const defaultPack = getDefaultPolicyPack(id, packId);
+    await tx.insert(policyPacks).values({
+      id: packId,
+      workspaceId: id,
+      name: defaultPack.name,
+      version: defaultPack.version,
+      isActive: true,
+      rules: defaultPack.rules,
+      defaultOutcome: defaultPack.defaultOutcome,
+      createdBy: user.userId,
+    });
+  });
 
   return c.json({ id, ...input }, 201);
 });

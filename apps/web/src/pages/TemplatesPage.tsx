@@ -5,6 +5,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { pageTypeSchema } from '@kaibase/shared';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
+import { ErrorBanner } from '../components/ErrorBanner.js';
+import { MutationError } from '../components/MutationError.js';
 import * as shared from '../theme/shared.css.js';
 import * as styles from './TemplatesPage.css.js';
 
@@ -140,12 +142,15 @@ export function TemplatesPage(): React.ReactElement {
               {createMutation.isPending ? '...' : t('common:actions.save')}
             </button>
           </div>
+          <MutationError error={createMutation.error} />
         </form>
       )}
 
       {query.isLoading && <div className={shared.loading}>Loading...</div>}
 
-      {!query.isLoading && templates.length === 0 && !showForm && (
+      {query.isError && <ErrorBanner error={query.error} onRetry={() => void query.refetch()} />}
+
+      {!query.isLoading && !query.isError && templates.length === 0 && !showForm && (
         <div className={shared.emptyState}>{t('settings:templates.empty')}</div>
       )}
 
@@ -173,6 +178,7 @@ export function TemplatesPage(): React.ReactElement {
                 >
                   {t('common:actions.delete')}
                 </button>
+                <MutationError error={toggleMutation.error ?? deleteMutation.error} />
               </div>
             </div>
           ))}

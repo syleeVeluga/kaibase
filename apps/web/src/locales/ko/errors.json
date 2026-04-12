@@ -10,5 +10,17 @@
   "policyVersionNotFound": "정책 버전을 찾을 수 없습니다",
   "policyEvaluationFailed": "정책 평가에 실패했습니다",
   "invalidInput": "잘못된 입력입니다",
-  "slugTaken": "이미 동일한 슬러그의 워크스페이스가 존재합니다"
+  "slugTaken": "이미 동일한 슬러그의 워크스페이스가 존재합니다",
+  "pageSlugTaken": "동일한 URL 슬러그를 가진 페이지가 이미 존재합니다",
+  "duplicateSource": "이 소스는 이미 추가되었습니다",
+  "duplicate": "이 항목은 이미 존재합니다",
+  "invalidReference": "참조된 항목이 존재하지 않습니다",
+  "llmUnavailable": "AI 서비스를 일시적으로 사용할 수 없습니다. 다시 시도해 주세요.",
+  "fetchFailed": "데이터를 불러오지 못했습니다",
+  "policyBlocked": "워크스페이스 정책에 의해 차단되었습니다",
+  "notWorkspaceMember": "이 워크스페이스의 멤버가 아닙니다",
+  "missingFile": "업로드할 파일을 선택해 주세요",
+  "fileTooLarge": "파일이 너무 큽니다 (최대 100 MB)",
+  "unsupportedConnector": "이 커넥터 유형은 아직 지원되지 않습니다",
+  "invalidConnectorConfig": "커넥터 설정이 올바르지 않습니다"
 }

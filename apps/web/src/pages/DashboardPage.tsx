@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
+import { ErrorBanner } from '../components/ErrorBanner.js';
 import * as shared from '../theme/shared.css.js';
 import * as styles from './DashboardPage.css.js';
 
@@ -53,6 +54,8 @@ export function DashboardPage(): React.ReactElement {
 
       {statsQuery.isLoading && <div className={shared.loading}>Loading...</div>}
 
+      {statsQuery.isError && <ErrorBanner error={statsQuery.error} onRetry={() => void statsQuery.refetch()} />}
+
       {stats && (
         <div className={styles.statsGrid}>
           <div className={styles.statCard}>
@@ -81,6 +84,8 @@ export function DashboardPage(): React.ReactElement {
           </div>
         </div>
       )}
+
+      {healthQuery.isError && <ErrorBanner error={healthQuery.error} onRetry={() => void healthQuery.refetch()} />}
 
       {health && (
         <div className={styles.healthSection}>

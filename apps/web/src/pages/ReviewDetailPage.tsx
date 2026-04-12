@@ -8,6 +8,7 @@ import type { ContentBlock } from '@kaibase/shared';
 import { BlockContentViewer } from '../components/BlockContentViewer.js';
 import { StatusBadge } from '../components/StatusBadge.js';
 import { parseBlocks } from '../lib/parse-blocks.js';
+import { MutationError } from '../components/MutationError.js';
 import * as shared from '../theme/shared.css.js';
 import * as styles from './ReviewDetailPage.css.js';
 
@@ -204,6 +205,7 @@ export function ReviewDetailPage(): React.ReactElement {
           >
             {t('common:actions.approve')}
           </button>
+          <MutationError error={approveMutation.error ?? rejectMutation.error} />
         </div>
       )}
 

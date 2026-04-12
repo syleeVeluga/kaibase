@@ -5,6 +5,7 @@ import { createConnectorSchema, generateId, sha256 } from '@kaibase/shared';
 import { authMiddleware } from '../middleware/auth.js';
 import { workspaceMiddleware } from '../middleware/workspace.js';
 import { AppError } from '../middleware/error-handler.js';
+import { isPgUniqueViolation } from '../middleware/db-errors.js';
 import { db } from '@kaibase/db/client';
 import { sourceConnectors, sources, activityEvents } from '@kaibase/db/schema';
 import { eq, and } from 'drizzle-orm';
@@ -124,25 +125,33 @@ connectorRoutes.post('/:id/sync', async (c) => {
     if (existing.length > 0) continue;
 
     const sourceId = generateId();
-    await db.insert(sources).values({
-      id: sourceId,
-      workspaceId,
-      sourceType: 'connector',
-      channel: 'connector',
-      connectorId: connector.id,
-      sourceUri: file.filePath,
-      title: file.relativePath,
-      contentHash,
-      rawMetadata: {
-        filename: file.relativePath,
-        mimeType: file.mimeType,
-        sizeBytes: file.sizeBytes,
-        connectorType: 'local_folder',
-        folderPath: config.folderPath,
-      },
-      ingestedBy: user.userId,
-      status: 'pending',
-    });
+    try {
+      await db.insert(sources).values({
+        id: sourceId,
+        workspaceId,
+        sourceType: 'connector',
+        channel: 'connector',
+        connectorId: connector.id,
+        sourceUri: file.filePath,
+        title: file.relativePath,
+        contentHash,
+        rawMetadata: {
+          filename: file.relativePath,
+          mimeType: file.mimeType,
+          sizeBytes: file.sizeBytes,
+          connectorType: 'local_folder',
+          folderPath: config.folderPath,
+        },
+        ingestedBy: user.userId,
+        status: 'pending',
+      });
+    } catch (err: unknown) {
+      if (isPgUniqueViolation(err)) {
+        logger.info({ filePath: file.filePath }, 'Skipping duplicate source during sync');
+        continue;
+      }
+      throw err;
+    }
 
     await ingestQueue.add('parse', {
       sourceId,

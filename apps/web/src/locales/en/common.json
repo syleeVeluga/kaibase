@@ -28,7 +28,8 @@
     "createAccount": "Create account",
     "archive": "Archive",
     "back": "Back",
-    "view": "View"
+    "view": "View",
+    "retry": "Retry"
   },
   "auth": {
     "signInTitle": "Sign in to your account",

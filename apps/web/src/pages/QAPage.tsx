@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
+import { MutationError } from '../components/MutationError.js';
 import * as shared from '../theme/shared.css.js';
 import * as styles from './QAPage.css.js';
 
@@ -119,6 +120,7 @@ export function QAPage(): React.ReactElement {
               {promotedIds.has(entry.response.answerId) && (
                 <span style={{ fontSize: '12px', color: '#16a34a' }}>Saved!</span>
               )}
+              <MutationError error={promoteMutation.error} />
             </div>
           </div>
         ))}

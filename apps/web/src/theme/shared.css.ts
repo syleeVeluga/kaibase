@@ -159,3 +159,22 @@ export const textMeta = style({
   fontSize: vars.fontSize.xs,
   color: vars.color.textSecondary,
 });
+
+export const errorBanner = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space.sm,
+  padding: `${vars.space.sm} ${vars.space.md}`,
+  backgroundColor: '#fef2f2',
+  color: '#991b1b',
+  fontSize: vars.fontSize.sm,
+  borderRadius: vars.radius.md,
+  border: '1px solid #fecaca',
+  marginBottom: vars.space.md,
+});
+
+export const mutationError = style({
+  color: vars.color.error,
+  fontSize: vars.fontSize.xs,
+  marginTop: vars.space.xs,
+});

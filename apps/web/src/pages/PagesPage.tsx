@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
 import { StatusBadge } from '../components/StatusBadge.js';
+import { ErrorBanner } from '../components/ErrorBanner.js';
+import { MutationError } from '../components/MutationError.js';
 import * as shared from '../theme/shared.css.js';
 
 interface Page {
@@ -50,7 +52,9 @@ export function PagesPage(): React.ReactElement {
 
       {query.isLoading && <div className={shared.loading}>Loading...</div>}
 
-      {pages.length === 0 && !query.isLoading && (
+      {query.isError && <ErrorBanner error={query.error} onRetry={() => void query.refetch()} />}
+
+      {pages.length === 0 && !query.isLoading && !query.isError && (
         <div className={shared.emptyState}>
           <p>No pages yet. Pages are generated when AI compiles your sources.</p>
         </div>
@@ -92,6 +96,7 @@ export function PagesPage(): React.ReactElement {
                       {t('actions.publish')}
                     </button>
                   )}
+                  <MutationError error={publishMutation.error} />
                 </td>
               </tr>
             ))}

@@ -21,6 +21,7 @@ import {
 import { PolicyEngine } from '@kaibase/policy';
 import { getEmbeddingProvider, getQALLM as getLLM } from '../providers.js';
 import { compileQueue } from '../queues.js';
+import { logger } from '../logger.js';
 import type { AppEnv } from '../types.js';
 
 export const qaRoutes = new Hono<AppEnv>();
@@ -93,11 +94,17 @@ qaRoutes.post('/ask', zValidator('json', askQuestionSchema), async (c) => {
     contextPages,
   });
 
-  const llmResponse = await getLLM().complete(messages, {
-    jsonMode: true,
-    temperature: 0.3,
-    maxTokens: 2000,
-  });
+  let llmResponse;
+  try {
+    llmResponse = await getLLM().complete(messages, {
+      jsonMode: true,
+      temperature: 0.3,
+      maxTokens: 2000,
+    });
+  } catch (err) {
+    logger.error({ err }, 'LLM call failed');
+    throw new AppError(502, 'LLM_UNAVAILABLE', 'errors.llmUnavailable');
+  }
 
   let result: AnswerQuestionResult;
   try {
@@ -298,23 +305,6 @@ qaRoutes.post(
         language: 'en',
         publishedAt: pageStatus === 'published' ? new Date() : null,
       });
-
-      // Create citations for canonical_page references
-      const citationValues = detail.citations
-        .filter((cit) => cit.type === 'canonical_page')
-        .map((cit) => ({
-          id: generateId(),
-          pageId,
-          sourceId: cit.refId,
-          excerpt: cit.excerpt,
-          confidence: 1.0,
-        }));
-
-      if (citationValues.length > 0) {
-        // Citations reference sources, but Q&A citations may reference pages.
-        // For now, only insert citations where refId is a valid source.
-        // Page-to-page citations can be handled via a separate table in Phase 1.
-      }
 
       await tx.insert(compilationTraces).values({
         id: traceId,

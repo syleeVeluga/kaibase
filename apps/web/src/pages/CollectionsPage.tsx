@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
+import { ErrorBanner } from '../components/ErrorBanner.js';
 import * as shared from '../theme/shared.css.js';
 import * as styles from './CollectionsPage.css.js';
 
@@ -40,7 +41,9 @@ export function CollectionsPage(): React.ReactElement {
 
       {query.isLoading && <div className={shared.loading}>Loading...</div>}
 
-      {!query.isLoading && items.length === 0 && (
+      {query.isError && <ErrorBanner error={query.error} onRetry={() => void query.refetch()} />}
+
+      {!query.isLoading && !query.isError && items.length === 0 && (
         <div className={shared.emptyState}>{t('collections:empty')}</div>
       )}
 

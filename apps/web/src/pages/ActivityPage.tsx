@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { activityEventTypeSchema } from '@kaibase/shared';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
+import { ErrorBanner } from '../components/ErrorBanner.js';
 import * as shared from '../theme/shared.css.js';
 import * as styles from './ActivityPage.css.js';
 
@@ -101,7 +102,9 @@ export function ActivityPage(): React.ReactElement {
 
       {query.isLoading && <div className={shared.loading}>Loading...</div>}
 
-      {!query.isLoading && events.length === 0 && (
+      {query.isError && <ErrorBanner error={query.error} onRetry={() => void query.refetch()} />}
+
+      {!query.isLoading && !query.isError && events.length === 0 && (
         <div className={shared.emptyState}>{t('activity:empty')}</div>
       )}
 

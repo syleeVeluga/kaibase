@@ -8,6 +8,7 @@ import { useWorkspace } from '../lib/workspace-context.js';
 import { BlockContentViewer } from '../components/BlockContentViewer.js';
 import { StatusBadge } from '../components/StatusBadge.js';
 import { parseBlocks } from '../lib/parse-blocks.js';
+import { MutationError } from '../components/MutationError.js';
 import * as shared from '../theme/shared.css.js';
 import * as styles from './PageDetailPage.css.js';
 
@@ -121,6 +122,7 @@ export function PageDetailPage(): React.ReactElement {
               {t('common:actions.archive')}
             </button>
           )}
+          <MutationError error={publishMutation.error ?? archiveMutation.error} />
         </div>
       </div>
 

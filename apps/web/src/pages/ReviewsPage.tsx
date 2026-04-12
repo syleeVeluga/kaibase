@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
 import { StatusBadge } from '../components/StatusBadge.js';
+import { ErrorBanner } from '../components/ErrorBanner.js';
+import { MutationError } from '../components/MutationError.js';
 import * as shared from '../theme/shared.css.js';
 
 interface ReviewTask {
@@ -60,7 +62,9 @@ export function ReviewsPage(): React.ReactElement {
 
       {query.isLoading && <div className={shared.loading}>Loading...</div>}
 
-      {reviews.length === 0 && !query.isLoading && (
+      {query.isError && <ErrorBanner error={query.error} onRetry={() => void query.refetch()} />}
+
+      {reviews.length === 0 && !query.isLoading && !query.isError && (
         <div className={shared.emptyState}>
           <p>No review tasks. Reviews appear when AI-generated pages require human approval.</p>
         </div>
@@ -92,7 +96,7 @@ export function ReviewsPage(): React.ReactElement {
                 </td>
                 <td className={shared.td}>
                   {r.status === 'pending' && (
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <button
                         className={shared.primaryButton}
                         onClick={() => approveMutation.mutate(r.id)}
@@ -107,6 +111,7 @@ export function ReviewsPage(): React.ReactElement {
                       >
                         {t('actions.reject')}
                       </button>
+                      <MutationError error={approveMutation.error ?? rejectMutation.error} />
                     </div>
                   )}
                   {r.status !== 'pending' && (

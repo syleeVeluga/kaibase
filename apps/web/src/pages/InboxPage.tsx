@@ -4,6 +4,7 @@ import { Link } from 'react-router';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
 import { StatusBadge } from '../components/StatusBadge.js';
+import { ErrorBanner } from '../components/ErrorBanner.js';
 import * as shared from '../theme/shared.css.js';
 
 interface Source {
@@ -56,7 +57,8 @@ export function InboxPage(): React.ReactElement {
           Recent Sources
         </h2>
         {sourcesQuery.isLoading && <div className={shared.loading}>Loading...</div>}
-        {recentSources.length === 0 && !sourcesQuery.isLoading && (
+        {sourcesQuery.isError && <ErrorBanner error={sourcesQuery.error} onRetry={() => void sourcesQuery.refetch()} />}
+        {recentSources.length === 0 && !sourcesQuery.isLoading && !sourcesQuery.isError && (
           <div className={shared.emptyState}>
             <p>No sources yet.</p>
             <p>
@@ -98,7 +100,8 @@ export function InboxPage(): React.ReactElement {
           Generated Pages
         </h2>
         {pagesQuery.isLoading && <div className={shared.loading}>Loading...</div>}
-        {recentPages.length === 0 && !pagesQuery.isLoading && (
+        {pagesQuery.isError && <ErrorBanner error={pagesQuery.error} onRetry={() => void pagesQuery.refetch()} />}
+        {recentPages.length === 0 && !pagesQuery.isLoading && !pagesQuery.isError && (
           <div className={shared.emptyState}>
             <p>No pages generated yet. Pages will appear here once AI compiles your sources.</p>
           </div>
