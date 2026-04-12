@@ -172,6 +172,84 @@ describe('matchRule', () => {
     });
   });
 
+  describe('not_equals', () => {
+    it('matches when context value differs from condition value', () => {
+      const rule = makeRule({
+        conditions: [{ field: 'actor_type', operator: 'not_equals', value: 'user' }],
+        outcome: 'REVIEW_REQUIRED',
+      });
+      expect(matchRule(rule, { actor_type: 'ai' })).toBe(true);
+      expect(matchRule(rule, { actor_type: 'user' })).toBe(false);
+    });
+
+    it('returns true when the field is absent (undefined !== value)', () => {
+      const rule = makeRule({
+        conditions: [{ field: 'missing', operator: 'not_equals', value: 'test' }],
+        outcome: 'DRAFT_ONLY',
+      });
+      expect(matchRule(rule, {})).toBe(true);
+    });
+  });
+
+  describe('not_contains', () => {
+    it('matches when substring is NOT present in a string', () => {
+      const rule = makeRule({
+        conditions: [{ field: 'title', operator: 'not_contains', value: 'SECRET' }],
+        outcome: 'AUTO_PUBLISH',
+      });
+      expect(matchRule(rule, { title: 'Public Report' })).toBe(true);
+      expect(matchRule(rule, { title: 'SECRET Document' })).toBe(false);
+    });
+
+    it('matches when element is NOT in an array context value', () => {
+      const rule = makeRule({
+        conditions: [{ field: 'tags', operator: 'not_contains', value: 'classified' }],
+        outcome: 'AUTO_PUBLISH',
+      });
+      expect(matchRule(rule, { tags: ['public', 'report'] })).toBe(true);
+      expect(matchRule(rule, { tags: ['classified', 'internal'] })).toBe(false);
+    });
+
+    it('returns true when context value is not a string or array', () => {
+      const rule = makeRule({
+        conditions: [{ field: 'count', operator: 'not_contains', value: 'x' }],
+        outcome: 'DRAFT_ONLY',
+      });
+      expect(matchRule(rule, { count: 42 })).toBe(true);
+    });
+  });
+
+  describe('exists / not_exists', () => {
+    it('exists: matches when field is present and non-null', () => {
+      const rule = makeRule({
+        conditions: [{ field: 'classification', operator: 'exists', value: null }],
+        outcome: 'AUTO_PUBLISH',
+      });
+      expect(matchRule(rule, { classification: 'report' })).toBe(true);
+      expect(matchRule(rule, { classification: 0 })).toBe(true);
+      expect(matchRule(rule, { classification: false })).toBe(true);
+      expect(matchRule(rule, {})).toBe(false);
+    });
+
+    it('exists: returns false for null values', () => {
+      const rule = makeRule({
+        conditions: [{ field: 'data', operator: 'exists', value: null }],
+        outcome: 'DRAFT_ONLY',
+      });
+      expect(matchRule(rule, { data: null })).toBe(false);
+    });
+
+    it('not_exists: matches when field is absent or null', () => {
+      const rule = makeRule({
+        conditions: [{ field: 'optional_field', operator: 'not_exists', value: null }],
+        outcome: 'BLOCKED',
+      });
+      expect(matchRule(rule, {})).toBe(true);
+      expect(matchRule(rule, { optional_field: null })).toBe(true);
+      expect(matchRule(rule, { optional_field: 'present' })).toBe(false);
+    });
+  });
+
   describe('AND logic across multiple conditions', () => {
     it('returns true only when ALL conditions are satisfied', () => {
       const rule = makeRule({
@@ -275,6 +353,11 @@ describe('PolicyEngine', () => {
       const result = engine.evaluate({ actor_type: 'ai', action_type: 'summarize' });
       expect(result.outcome).toBe('AUTO_PUBLISH');
     });
+
+    it('rule priority 40: auto-publishes AI entity extraction', () => {
+      const result = engine.evaluate({ actor_type: 'ai', action_type: 'extract_entities' });
+      expect(result.outcome).toBe('AUTO_PUBLISH');
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -296,6 +379,37 @@ describe('PolicyEngine', () => {
       expect(result.outcome).toBe('BLOCKED');
     });
   });
+
+  // -------------------------------------------------------------------------
+  // defaultOutcome — pack-level configuration
+  // -------------------------------------------------------------------------
+
+  describe('defaultOutcome from pack', () => {
+    it('uses pack defaultOutcome when no rule matches', () => {
+      const pack = getDefaultPolicyPack('ws-do');
+      pack.defaultOutcome = 'DRAFT_ONLY';
+      const engine = new PolicyEngine(pack);
+      const result = engine.evaluate({ actor_type: 'system', action_type: 'unknown' });
+      expect(result.outcome).toBe('DRAFT_ONLY');
+    });
+
+    it('falls back to REVIEW_REQUIRED when defaultOutcome is missing at runtime', () => {
+      const pack = getDefaultPolicyPack('ws-no-do');
+      // Simulate corrupted/missing defaultOutcome at runtime (defense-in-depth)
+      const corrupted = { ...pack, defaultOutcome: undefined } as unknown as import('@kaibase/shared').PolicyPack;
+      const engine = new PolicyEngine(corrupted);
+      const result = engine.evaluate({ actor_type: 'system', action_type: 'unknown' });
+      expect(result.outcome).toBe('REVIEW_REQUIRED');
+    });
+
+    it('uses BLOCKED as defaultOutcome when configured', () => {
+      const pack = getDefaultPolicyPack('ws-blocked');
+      pack.defaultOutcome = 'BLOCKED';
+      const engine = new PolicyEngine(pack);
+      const result = engine.evaluate({});
+      expect(result.outcome).toBe('BLOCKED');
+    });
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -308,10 +422,11 @@ describe('getDefaultPolicyPack', () => {
     expect(pack.workspaceId).toBe('ws-xyz');
   });
 
-  it('returns version 1 and isActive true', () => {
+  it('returns version 1, isActive true, and defaultOutcome REVIEW_REQUIRED', () => {
     const pack = getDefaultPolicyPack('ws-xyz');
     expect(pack.version).toBe(1);
     expect(pack.isActive).toBe(true);
+    expect(pack.defaultOutcome).toBe('REVIEW_REQUIRED');
   });
 
   it('returns exactly 5 rules', () => {

@@ -32,7 +32,11 @@ export {
   policyConditionSchema,
   policyRuleSchema,
   createPolicyPackSchema,
+  updatePolicyPackSchema,
+  evaluatePolicySchema,
   type CreatePolicyPackInput,
+  type UpdatePolicyPackInput,
+  type EvaluatePolicyInput,
 } from './policy.schema.js';
 
 export { askQuestionSchema, type AskQuestionInput } from './qa.schema.js';

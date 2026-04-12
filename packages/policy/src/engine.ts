@@ -46,10 +46,7 @@ export class PolicyEngine {
     // Sort once at construction time; evaluation itself is O(n) thereafter.
     this.sortedRules = [...pack.rules].sort((a, b) => a.priority - b.priority);
 
-    // PolicyPack in @kaibase/shared does not expose a `defaultOutcome` field
-    // yet (the PRD schema does).  Until it is added to the shared type, we
-    // fall back to the module constant which matches the PRD's stated default.
-    this.defaultOutcome = FALLBACK_OUTCOME;
+    this.defaultOutcome = pack.defaultOutcome ?? FALLBACK_OUTCOME;
     this.packId = pack.id;
     this.packName = pack.name;
   }

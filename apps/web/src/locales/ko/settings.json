@@ -13,6 +13,51 @@
   },
   "policy": {
     "title": "정책 규칙",
-    "edit": "규칙 편집"
+    "edit": "규칙 편집",
+    "activePack": "활성 정책 팩",
+    "version": "버전",
+    "noActivePack": "활성 정책 팩이 없습니다. AI 작업을 관리할 정책을 생성하세요.",
+    "defaultOutcome": "기본 결과",
+    "outcomes": {
+      "AUTO_PUBLISH": "자동 게시",
+      "DRAFT_ONLY": "초안만",
+      "REVIEW_REQUIRED": "검토 필요",
+      "BLOCKED": "차단됨"
+    },
+    "rules": {
+      "name": "규칙 이름",
+      "priority": "우선순위",
+      "enabled": "활성화",
+      "conditions": "조건",
+      "outcome": "결과",
+      "addRule": "규칙 추가",
+      "deleteRule": "규칙 삭제"
+    },
+    "operators": {
+      "equals": "같음",
+      "not_equals": "같지 않음",
+      "contains": "포함",
+      "not_contains": "포함하지 않음",
+      "matches": "패턴 일치",
+      "gt": "보다 큼",
+      "lt": "보다 작음",
+      "in": "다음 중 하나",
+      "not_in": "다음 중 아님",
+      "exists": "존재함",
+      "not_exists": "존재하지 않음"
+    },
+    "dryRun": {
+      "title": "정책 테스트",
+      "evaluate": "평가",
+      "result": "결과",
+      "noMatch": "일치하는 규칙 없음"
+    },
+    "versions": {
+      "title": "버전 기록",
+      "current": "현재",
+      "view": "보기"
+    },
+    "saved": "정책이 저장되었습니다",
+    "saveError": "정책 저장에 실패했습니다"
   }
 }

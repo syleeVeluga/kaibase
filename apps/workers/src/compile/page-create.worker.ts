@@ -9,6 +9,8 @@ import {
   reviewTasks,
   activityEvents,
   policyPacks,
+  entities,
+  concepts,
 } from '@kaibase/db';
 import {
   OpenAIProvider,
@@ -106,10 +108,12 @@ export const pageCreateWorker = new Worker(
     // Only process page-create jobs here.
     if (job.name === 'embedding') return;
 
-    const { sourceIds, workspaceId, pageType } = job.data as {
+    const { sourceIds, workspaceId, pageType, extractedEntityIds, extractedConceptIds } = job.data as {
       sourceIds: string[];
       workspaceId: string;
       pageType: string;
+      extractedEntityIds?: string[];
+      extractedConceptIds?: string[];
     };
     logger.info(
       { sourceIds, workspaceId, pageType, jobId: job.id },
@@ -161,6 +165,7 @@ export const pageCreateWorker = new Worker(
         name: activePack.name,
         version: activePack.version,
         isActive: activePack.isActive,
+        defaultOutcome: activePack.defaultOutcome as PolicyPack['defaultOutcome'],
         rules: activePack.rules as PolicyPack['rules'],
         createdAt: activePack.createdAt,
         updatedAt: activePack.updatedAt,
@@ -224,10 +229,45 @@ export const pageCreateWorker = new Worker(
       text: s.contentText ?? '',
     }));
 
+    // Fetch extracted entities/concepts in parallel to enrich the page creation prompt
+    let workspaceContext: string | undefined;
+    const [entityRecords, conceptRecords] = await Promise.all([
+      extractedEntityIds?.length
+        ? db
+            .select({ name: entities.name, entityType: entities.entityType, description: entities.description })
+            .from(entities)
+            .where(inArray(entities.id, extractedEntityIds))
+        : Promise.resolve([]),
+      extractedConceptIds?.length
+        ? db
+            .select({ name: concepts.name, description: concepts.description })
+            .from(concepts)
+            .where(inArray(concepts.id, extractedConceptIds))
+        : Promise.resolve([]),
+    ]);
+
+    const contextParts: string[] = [];
+    if (entityRecords.length > 0) {
+      const entityLines = entityRecords
+        .map((e) => `- ${e.name} (${e.entityType}): ${e.description ?? 'no description'}`)
+        .join('\n');
+      contextParts.push(`Entities extracted from the source:\n${entityLines}`);
+    }
+    if (conceptRecords.length > 0) {
+      const conceptLines = conceptRecords
+        .map((c) => `- ${c.name}: ${c.description ?? 'no description'}`)
+        .join('\n');
+      contextParts.push(`Concepts extracted from the source:\n${conceptLines}`);
+    }
+    if (contextParts.length > 0) {
+      workspaceContext = contextParts.join('\n\n');
+    }
+
     const promptInput: CreatePageInput = {
       sources: createPageSources,
       pageType: pageType as CreatePageInput['pageType'],
       language,
+      workspaceContext,
     };
 
     const messages = createPagePrompt(promptInput);

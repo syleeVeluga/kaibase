@@ -6,6 +6,7 @@ export interface PolicyPack {
   name: string;
   version: number;
   isActive: boolean;
+  defaultOutcome: PolicyOutcome;
   rules: PolicyRule[];
   createdAt: Date;
   updatedAt: Date;
@@ -24,7 +25,7 @@ export interface PolicyRule {
 
 export interface PolicyCondition {
   field: string;
-  operator: 'equals' | 'contains' | 'matches' | 'gt' | 'lt' | 'in' | 'not_in';
+  operator: 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'matches' | 'gt' | 'lt' | 'in' | 'not_in' | 'exists' | 'not_exists';
   value: unknown;
 }
 

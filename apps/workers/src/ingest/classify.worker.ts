@@ -137,20 +137,24 @@ export const classifyWorker = new Worker(
     });
 
     // ---------------------------------------------------------------
-    // 4. Fan out: add summarize job and page-compile job
+    // 4. Fan out: summarize (parallel) + extract-entities (which
+    //    enqueues page-create after extraction completes)
     // ---------------------------------------------------------------
     await Promise.all([
       queues.aiIngest.add('summarize', { sourceId, workspaceId }),
-      queues.aiPageCompile.add('page-create', {
-        sourceIds: [sourceId],
+      queues.aiIngest.add('extract-entities', {
+        sourceId,
         workspaceId,
-        pageType: classification.section,
+        classification: {
+          section: classification.section,
+          contentType: classification.contentType,
+        },
       }),
     ]);
 
     logger.info(
       { sourceId, workspaceId },
-      'Enqueued summarize and page-create jobs',
+      'Enqueued summarize and extract-entities jobs',
     );
 
     return {

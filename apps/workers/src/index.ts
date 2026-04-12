@@ -1,6 +1,7 @@
 import pino from 'pino';
 import { classifyWorker } from './ingest/classify.worker.js';
 import { summarizeWorker } from './ingest/summarize.worker.js';
+import { extractEntitiesWorker } from './ingest/extract-entities.worker.js';
 import { parseWorker } from './ingest/parse.worker.js';
 import { pageCreateWorker } from './compile/page-create.worker.js';
 import { embeddingWorker } from './compile/embedding.worker.js';
@@ -16,6 +17,7 @@ const logger = pino({
 const workers = [
   classifyWorker,
   summarizeWorker,
+  extractEntitiesWorker,
   parseWorker,
   pageCreateWorker,
   embeddingWorker,

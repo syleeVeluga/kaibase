@@ -41,13 +41,17 @@ function toNumber(value: unknown): number {
  * Evaluate a single PolicyCondition against a resolved context value.
  *
  * Supported operators:
- *   equals     — strict equality (===)
- *   contains   — substring match (strings) or array element presence
- *   matches    — regex test (context value cast to string)
- *   gt         — numeric greater-than
- *   lt         — numeric less-than
- *   in         — context value is a member of condition value array
- *   not_in     — context value is NOT a member of condition value array
+ *   equals       — strict equality (===)
+ *   not_equals   — strict inequality (!==)
+ *   contains     — substring match (strings) or array element presence
+ *   not_contains — inverse of contains
+ *   matches      — regex test (context value cast to string)
+ *   gt           — numeric greater-than
+ *   lt           — numeric less-than
+ *   in           — context value is a member of condition value array
+ *   not_in       — context value is NOT a member of condition value array
+ *   exists       — context value is not undefined/null
+ *   not_exists   — context value is undefined/null
  */
 function evaluateCondition(
   condition: PolicyCondition,
@@ -60,14 +64,19 @@ function evaluateCondition(
       return contextValue === condValue;
     }
 
-    case 'contains': {
+    case 'not_equals': {
+      return contextValue !== condValue;
+    }
+
+    case 'contains':
+    case 'not_contains': {
+      let found = false;
       if (typeof contextValue === 'string' && typeof condValue === 'string') {
-        return contextValue.includes(condValue);
+        found = contextValue.includes(condValue);
+      } else if (Array.isArray(contextValue)) {
+        found = contextValue.includes(condValue);
       }
-      if (Array.isArray(contextValue)) {
-        return contextValue.includes(condValue);
-      }
-      return false;
+      return operator === 'contains' ? found : !found;
     }
 
     case 'matches': {
@@ -109,6 +118,14 @@ function evaluateCondition(
     case 'not_in': {
       if (!Array.isArray(condValue)) return true;
       return !condValue.includes(contextValue);
+    }
+
+    case 'exists': {
+      return contextValue !== undefined && contextValue !== null;
+    }
+
+    case 'not_exists': {
+      return contextValue === undefined || contextValue === null;
     }
 
     default: {

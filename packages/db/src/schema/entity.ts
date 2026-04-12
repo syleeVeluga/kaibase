@@ -7,6 +7,7 @@ import {
   jsonb,
   timestamp,
   index,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { workspaces } from './workspace.js';
 import { canonicalPages } from './page.js';
@@ -49,6 +50,7 @@ export const entities = pgTable(
     index('idx_entity_workspace_type').on(t.workspaceId, t.entityType),
     index('idx_entity_name').on(t.workspaceId, t.name),
     index('idx_entity_canonical_page').on(t.canonicalPageId),
+    uniqueIndex('uq_entity_workspace_name_type').on(t.workspaceId, t.name, t.entityType),
   ],
 );
 
@@ -75,6 +77,7 @@ export const concepts = pgTable(
     index('idx_concept_name').on(t.workspaceId, t.name),
     index('idx_concept_canonical_page').on(t.canonicalPageId),
     index('idx_concept_parent').on(t.parentConceptId),
+    uniqueIndex('uq_concept_workspace_name').on(t.workspaceId, t.name),
   ],
 );
 

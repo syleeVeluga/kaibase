@@ -13,6 +13,51 @@
   },
   "policy": {
     "title": "Policy Rules",
-    "edit": "Edit Rules"
+    "edit": "Edit Rules",
+    "activePack": "Active Policy Pack",
+    "version": "Version",
+    "noActivePack": "No active policy pack. Create one to govern AI actions.",
+    "defaultOutcome": "Default Outcome",
+    "outcomes": {
+      "AUTO_PUBLISH": "Auto Publish",
+      "DRAFT_ONLY": "Draft Only",
+      "REVIEW_REQUIRED": "Review Required",
+      "BLOCKED": "Blocked"
+    },
+    "rules": {
+      "name": "Rule Name",
+      "priority": "Priority",
+      "enabled": "Enabled",
+      "conditions": "Conditions",
+      "outcome": "Outcome",
+      "addRule": "Add Rule",
+      "deleteRule": "Delete Rule"
+    },
+    "operators": {
+      "equals": "equals",
+      "not_equals": "does not equal",
+      "contains": "contains",
+      "not_contains": "does not contain",
+      "matches": "matches pattern",
+      "gt": "greater than",
+      "lt": "less than",
+      "in": "is one of",
+      "not_in": "is not one of",
+      "exists": "exists",
+      "not_exists": "does not exist"
+    },
+    "dryRun": {
+      "title": "Test Policy",
+      "evaluate": "Evaluate",
+      "result": "Result",
+      "noMatch": "No rule matched"
+    },
+    "versions": {
+      "title": "Version History",
+      "current": "Current",
+      "view": "View"
+    },
+    "saved": "Policy saved",
+    "saveError": "Failed to save policy"
   }
 }

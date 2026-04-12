@@ -22,6 +22,7 @@ export const policyPacks = pgTable(
     version: integer('version').notNull().default(1),
     isActive: boolean('is_active').notNull().default(false),
     rules: jsonb('rules').notNull().default([]),
+    defaultOutcome: varchar('default_outcome', { length: 50 }).notNull().default('REVIEW_REQUIRED'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     createdBy: uuid('created_by')

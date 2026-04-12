@@ -4,8 +4,9 @@ import { createWorkspaceSchema, updateWorkspaceSchema, generateId } from '@kaiba
 import { authMiddleware } from '../middleware/auth.js';
 import { AppError } from '../middleware/error-handler.js';
 import { db } from '@kaibase/db/client';
-import { workspaces, workspaceMembers } from '@kaibase/db/schema';
+import { workspaces, workspaceMembers, policyPacks } from '@kaibase/db/schema';
 import { eq } from 'drizzle-orm';
+import { getDefaultPolicyPack } from '@kaibase/policy';
 import type { AppEnv } from '../types.js';
 
 export const workspaceRoutes = new Hono<AppEnv>();
@@ -29,6 +30,20 @@ workspaceRoutes.post('/', zValidator('json', createWorkspaceSchema), async (c) =
       workspaceId: id,
       userId: user.userId,
       role: 'owner',
+    });
+
+    // Seed default policy pack for new workspace
+    const packId = generateId();
+    const defaultPack = getDefaultPolicyPack(id, packId);
+    await tx.insert(policyPacks).values({
+      id: packId,
+      workspaceId: id,
+      name: defaultPack.name,
+      version: defaultPack.version,
+      isActive: true,
+      rules: defaultPack.rules,
+      defaultOutcome: defaultPack.defaultOutcome,
+      createdBy: user.userId,
     });
   });
 

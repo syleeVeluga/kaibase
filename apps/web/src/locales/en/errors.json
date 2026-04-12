@@ -5,5 +5,9 @@
   "notFound": "Resource not found",
   "invalidCredentials": "Invalid email or password",
   "emailExists": "An account with this email already exists",
-  "missingWorkspace": "Workspace not found"
+  "missingWorkspace": "Workspace not found",
+  "policyNotFound": "No active policy pack found",
+  "policyVersionNotFound": "Policy version not found",
+  "policyEvaluationFailed": "Policy evaluation failed",
+  "invalidInput": "Invalid input"
 }

@@ -9,6 +9,7 @@ import { sourceRoutes } from './routes/sources.js';
 import { connectorRoutes } from './routes/connectors.js';
 import { pageRoutes } from './routes/pages.js';
 import { reviewRoutes } from './routes/reviews.js';
+import { policyRoutes } from './routes/policies.js';
 import { healthRoutes } from './routes/health.js';
 
 export const app = new Hono();
@@ -33,3 +34,4 @@ app.route('/api/v1/workspaces/:wid/sources', sourceRoutes);
 app.route('/api/v1/workspaces/:wid/connectors', connectorRoutes);
 app.route('/api/v1/workspaces/:wid/pages', pageRoutes);
 app.route('/api/v1/workspaces/:wid/reviews', reviewRoutes);
+app.route('/api/v1/workspaces/:wid/policy', policyRoutes);

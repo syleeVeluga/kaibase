@@ -142,7 +142,7 @@ export function getDefaultPolicyPack(
         {
           field: 'action_type',
           operator: 'in',
-          value: ['classify', 'summarize'],
+          value: ['classify', 'summarize', 'extract_entities'],
         },
       ],
       outcome: 'AUTO_PUBLISH',
@@ -155,6 +155,7 @@ export function getDefaultPolicyPack(
     name: 'Default Policy',
     version: 1,
     isActive: true,
+    defaultOutcome: 'REVIEW_REQUIRED',
     rules,
     createdAt: new Date(),
     updatedAt: new Date(),

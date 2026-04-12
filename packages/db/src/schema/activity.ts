@@ -25,6 +25,7 @@ export const activityEventTypeEnum = pgEnum('activity_event_type', [
   'digest',
   'channel_send',
   'mcp_call',
+  'policy_update',
 ]);
 
 export const actorTypeEnum = pgEnum('actor_type', [
