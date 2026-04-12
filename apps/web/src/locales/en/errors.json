@@ -1,0 +1,9 @@
+{
+  "internal": "An unexpected error occurred",
+  "unauthorized": "Please log in to continue",
+  "invalidToken": "Your session has expired",
+  "notFound": "Resource not found",
+  "invalidCredentials": "Invalid email or password",
+  "emailExists": "An account with this email already exists",
+  "missingWorkspace": "Workspace not found"
+}

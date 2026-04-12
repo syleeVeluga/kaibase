@@ -1,0 +1,17 @@
+{
+  "name": "@kaibase/mcp-server",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "@kaibase/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "6.0.2"
+  }
+}

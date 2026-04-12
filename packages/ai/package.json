@@ -1,0 +1,25 @@
+{
+  "name": "@kaibase/ai",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.86.1",
+    "@kaibase/shared": "workspace:*",
+    "openai": "6.33.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "6.0.2",
+    "vitest": "4.0.5"
+  }
+}

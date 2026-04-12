@@ -1,0 +1,17 @@
+{
+  "title": "Reviews",
+  "empty": "No reviews pending.",
+  "taskType": {
+    "page_creation": "New Page",
+    "page_update": "Page Update",
+    "classification": "Classification",
+    "contradiction": "Contradiction",
+    "stale_content": "Stale Content",
+    "lint_issue": "Lint Issue"
+  },
+  "detail": {
+    "aiReasoning": "AI Reasoning",
+    "proposedChange": "Proposed Change",
+    "assignedTo": "Assigned to"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "title": "Pages",
+  "create": "Create Page",
+  "empty": "No pages yet. Connect a folder to get started.",
+  "type": {
+    "project": "Project",
+    "entity": "Entity",
+    "concept": "Concept",
+    "brief": "Brief",
+    "answer": "Answer",
+    "summary": "Summary",
+    "comparison": "Comparison",
+    "custom": "Custom"
+  },
+  "detail": {
+    "citations": "Citations",
+    "sources": "Sources",
+    "lastUpdated": "Last updated",
+    "createdBy": "Created by"
+  }
+}

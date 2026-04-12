@@ -1,0 +1,17 @@
+{
+  "title": "리뷰",
+  "empty": "대기 중인 리뷰가 없습니다.",
+  "taskType": {
+    "page_creation": "새 페이지",
+    "page_update": "페이지 업데이트",
+    "classification": "분류",
+    "contradiction": "모순",
+    "stale_content": "오래된 콘텐츠",
+    "lint_issue": "린트 이슈"
+  },
+  "detail": {
+    "aiReasoning": "AI 추론",
+    "proposedChange": "제안된 변경",
+    "assignedTo": "담당자"
+  }
+}

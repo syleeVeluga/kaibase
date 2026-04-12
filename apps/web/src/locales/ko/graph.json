@@ -1,0 +1,10 @@
+{
+  "title": "지식 그래프",
+  "empty": "아직 그래프 데이터가 없습니다.",
+  "nodeTypes": {
+    "page": "페이지",
+    "entity": "엔티티",
+    "concept": "컨셉",
+    "source": "소스"
+  }
+}

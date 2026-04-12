@@ -1,0 +1,18 @@
+{
+  "title": "Settings",
+  "workspace": {
+    "title": "Workspace",
+    "name": "Workspace Name",
+    "language": "Default Language"
+  },
+  "connectors": {
+    "title": "Source Connectors",
+    "add": "Add Connector",
+    "localFolder": "Local Folder",
+    "status": "Sync Status"
+  },
+  "policy": {
+    "title": "Policy Rules",
+    "edit": "Edit Rules"
+  }
+}

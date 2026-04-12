@@ -1,0 +1,11 @@
+{
+  "title": "Notifications",
+  "empty": "No notifications.",
+  "markAllRead": "Mark all as read",
+  "types": {
+    "review_assigned": "Review assigned to you",
+    "page_published": "Page published",
+    "source_ingested": "New source ingested",
+    "compilation_complete": "Page compilation complete"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "title": "알림",
+  "empty": "알림이 없습니다.",
+  "markAllRead": "모두 읽음 표시",
+  "types": {
+    "review_assigned": "리뷰가 할당되었습니다",
+    "page_published": "페이지가 게시되었습니다",
+    "source_ingested": "새 소스가 수집되었습니다",
+    "compilation_complete": "페이지 컴파일이 완료되었습니다"
+  }
+}

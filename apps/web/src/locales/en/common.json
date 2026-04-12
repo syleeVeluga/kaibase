@@ -1,0 +1,31 @@
+{
+  "app": {
+    "name": "Kaibase"
+  },
+  "nav": {
+    "inbox": "Inbox",
+    "pages": "Pages",
+    "reviews": "Reviews",
+    "sources": "Sources",
+    "settings": "Settings"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "publish": "Publish",
+    "approve": "Approve",
+    "reject": "Reject",
+    "connect": "Connect",
+    "upload": "Upload"
+  },
+  "status": {
+    "draft": "Draft",
+    "published": "Published",
+    "archived": "Archived",
+    "pending": "Pending",
+    "processing": "Processing",
+    "processed": "Processed",
+    "failed": "Failed"
+  }
+}

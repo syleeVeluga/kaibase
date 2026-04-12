@@ -1,0 +1,37 @@
+{
+  "name": "@kaibase/web",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --build && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src/",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@kaibase/editor": "workspace:*",
+    "@kaibase/shared": "workspace:*",
+    "@tanstack/react-query": "5.97.0",
+    "i18next": "^25.1.2",
+    "i18next-browser-languagedetector": "^8.0.5",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-i18next": "^15.5.1",
+    "react-router": "^7.6.1",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vanilla-extract/css": "1.18.0",
+    "@vanilla-extract/vite-plugin": "5.0.0",
+    "@vitejs/plugin-react": "^4.5.2",
+    "typescript": "6.0.2",
+    "vite": "7.2.7",
+    "vitest": "4.0.5"
+  }
+}

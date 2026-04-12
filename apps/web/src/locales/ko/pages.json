@@ -1,0 +1,21 @@
+{
+  "title": "페이지",
+  "create": "페이지 생성",
+  "empty": "아직 페이지가 없습니다. 폴더를 연결하여 시작하세요.",
+  "type": {
+    "project": "프로젝트",
+    "entity": "엔티티",
+    "concept": "컨셉",
+    "brief": "브리프",
+    "answer": "답변",
+    "summary": "요약",
+    "comparison": "비교",
+    "custom": "사용자 정의"
+  },
+  "detail": {
+    "citations": "인용",
+    "sources": "소스",
+    "lastUpdated": "마지막 업데이트",
+    "createdBy": "작성자"
+  }
+}

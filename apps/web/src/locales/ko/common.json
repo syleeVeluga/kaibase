@@ -1,0 +1,31 @@
+{
+  "app": {
+    "name": "Kaibase"
+  },
+  "nav": {
+    "inbox": "수신함",
+    "pages": "페이지",
+    "reviews": "리뷰",
+    "sources": "소스",
+    "settings": "설정"
+  },
+  "actions": {
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "publish": "게시",
+    "approve": "승인",
+    "reject": "거부",
+    "connect": "연결",
+    "upload": "업로드"
+  },
+  "status": {
+    "draft": "초안",
+    "published": "게시됨",
+    "archived": "보관됨",
+    "pending": "대기 중",
+    "processing": "처리 중",
+    "processed": "처리됨",
+    "failed": "실패"
+  }
+}

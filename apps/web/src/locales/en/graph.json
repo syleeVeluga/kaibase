@@ -1,0 +1,10 @@
+{
+  "title": "Knowledge Graph",
+  "empty": "No graph data yet.",
+  "nodeTypes": {
+    "page": "Page",
+    "entity": "Entity",
+    "concept": "Concept",
+    "source": "Source"
+  }
+}
