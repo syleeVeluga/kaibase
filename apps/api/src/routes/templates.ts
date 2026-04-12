@@ -7,6 +7,7 @@ import { AppError } from '../middleware/error-handler.js';
 import { db } from '@kaibase/db/client';
 import { pageTemplates } from '@kaibase/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { findOne, updateOne } from '../route-helpers.js';
 import type { AppEnv } from '../types.js';
 
 export const templateRoutes = new Hono<AppEnv>();
@@ -33,20 +34,8 @@ templateRoutes.get('/', async (c) => {
 });
 
 templateRoutes.get('/:id', async (c) => {
-  const workspaceId = c.get('workspaceId');
-  const id = c.req.param('id');
-
-  const rows = await db
-    .select()
-    .from(pageTemplates)
-    .where(and(eq(pageTemplates.id, id), eq(pageTemplates.workspaceId, workspaceId)))
-    .limit(1);
-
-  if (rows.length === 0) {
-    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
-  }
-
-  return c.json(rows[0]);
+  const row = await findOne(pageTemplates, c.req.param('id'), c.get('workspaceId'));
+  return c.json(row);
 });
 
 templateRoutes.post('/', zValidator('json', createTemplateSchema), async (c) => {
@@ -71,21 +60,8 @@ templateRoutes.post('/', zValidator('json', createTemplateSchema), async (c) => 
 });
 
 templateRoutes.patch('/:id', zValidator('json', updateTemplateSchema), async (c) => {
-  const workspaceId = c.get('workspaceId');
-  const id = c.req.param('id');
-  const input = c.req.valid('json');
-
-  const updated = await db
-    .update(pageTemplates)
-    .set({ ...input, updatedAt: new Date() })
-    .where(and(eq(pageTemplates.id, id), eq(pageTemplates.workspaceId, workspaceId)))
-    .returning();
-
-  if (updated.length === 0) {
-    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
-  }
-
-  return c.json(updated[0]);
+  const result = await updateOne(pageTemplates, c.req.param('id'), c.get('workspaceId'), c.req.valid('json'));
+  return c.json(result);
 });
 
 templateRoutes.delete('/:id', async (c) => {

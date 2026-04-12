@@ -3,17 +3,8 @@ import { useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
+import type { SearchResult } from '@kaibase/shared';
 import * as styles from './CommandPalette.css.js';
-
-interface SearchResult {
-  pageId: string;
-  title: string;
-  pageType: string;
-  status: string;
-  slug: string;
-  snippet: string;
-  score: number;
-}
 
 export function CommandPalette(): React.ReactElement | null {
   const { t } = useTranslation(['search', 'common']);

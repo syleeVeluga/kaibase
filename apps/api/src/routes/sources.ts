@@ -7,6 +7,7 @@ import { AppError } from '../middleware/error-handler.js';
 import { db } from '@kaibase/db/client';
 import { sources, sourceAttachments, activityEvents } from '@kaibase/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { findOne } from '../route-helpers.js';
 import { ingestQueue } from '../queues.js';
 import { logger } from '../logger.js';
 import type { AppEnv } from '../types.js';
@@ -46,20 +47,8 @@ sourceRoutes.get('/', async (c) => {
 
 // Get single source
 sourceRoutes.get('/:id', async (c) => {
-  const workspaceId = c.get('workspaceId');
-  const id = c.req.param('id');
-
-  const rows = await db
-    .select()
-    .from(sources)
-    .where(and(eq(sources.id, id), eq(sources.workspaceId, workspaceId)))
-    .limit(1);
-
-  if (rows.length === 0) {
-    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
-  }
-
-  return c.json(rows[0]);
+  const row = await findOne(sources, c.req.param('id'), c.get('workspaceId'));
+  return c.json(row);
 });
 
 // Upload file

@@ -6,17 +6,8 @@ import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
 import { StatusBadge } from '../components/StatusBadge.js';
 import * as shared from '../theme/shared.css.js';
+import type { SearchResult } from '@kaibase/shared';
 import * as styles from './SearchPage.css.js';
-
-interface SearchResult {
-  pageId: string;
-  title: string;
-  pageType: string;
-  status: string;
-  slug: string;
-  snippet: string;
-  score: number;
-}
 
 export function SearchPage(): React.ReactElement {
   const { t } = useTranslation(['search', 'common']);

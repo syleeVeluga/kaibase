@@ -8,6 +8,7 @@ import { useAuth } from '../lib/auth-context.js';
 import { useWorkspace } from '../lib/workspace-context.js';
 import * as shared from '../theme/shared.css.js';
 import * as sourceStyles from './sources/SourcesPage.css.js';
+import * as styles from './SettingsPage.css.js';
 
 export function SettingsPage(): React.ReactElement {
   const { t } = useTranslation(['common', 'settings']);
@@ -19,16 +20,16 @@ export function SettingsPage(): React.ReactElement {
       </div>
 
       <WorkspaceSettings />
-      <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '24px 0' }} />
+      <hr className={styles.divider} />
       <section>
-        <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>
+        <h2 className={styles.sectionHeading}>
           {t('settings:templates.title')}
         </h2>
         <Link to="/settings/templates" className={shared.primaryButton}>
           {t('settings:templates.title')}
         </Link>
       </section>
-      <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '24px 0' }} />
+      <hr className={styles.divider} />
       <AccountSettings />
     </div>
   );
@@ -47,7 +48,7 @@ function WorkspaceSettings(): React.ReactElement {
 
   return (
     <section>
-      <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>
+      <h2 className={styles.sectionHeading}>
         Workspace
       </h2>
 
@@ -93,10 +94,10 @@ function AccountSettings(): React.ReactElement {
 
   return (
     <section>
-      <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>
+      <h2 className={styles.sectionHeading}>
         Account
       </h2>
-      <p style={{ fontSize: '14px', color: '#475569', marginBottom: '16px' }}>
+      <p className={styles.accountDescription}>
         Signed in as <strong>{user?.email}</strong>
       </p>
       <button className={shared.secondaryButton} onClick={logout}>

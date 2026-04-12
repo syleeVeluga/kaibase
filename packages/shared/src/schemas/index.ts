@@ -56,7 +56,7 @@ export {
   type UpdateCollectionInput,
 } from './collection.schema.js';
 
-export { searchQuerySchema, type SearchQueryInput } from './search.schema.js';
+export { searchQuerySchema, searchResultSchema, type SearchQueryInput, type SearchResult } from './search.schema.js';
 
 export {
   activityEventTypeSchema,

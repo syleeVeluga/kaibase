@@ -15,3 +15,15 @@ export const searchQuerySchema = z.object({
 });
 
 export type SearchQueryInput = z.infer<typeof searchQuerySchema>;
+
+export const searchResultSchema = z.object({
+  pageId: z.string(),
+  title: z.string(),
+  pageType: z.string(),
+  status: z.string(),
+  slug: z.string(),
+  snippet: z.string(),
+  score: z.number(),
+});
+
+export type SearchResult = z.infer<typeof searchResultSchema>;

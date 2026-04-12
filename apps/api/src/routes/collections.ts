@@ -3,10 +3,10 @@ import { zValidator } from '@hono/zod-validator';
 import { createCollectionSchema, updateCollectionSchema, generateId } from '@kaibase/shared';
 import { authMiddleware } from '../middleware/auth.js';
 import { workspaceMiddleware } from '../middleware/workspace.js';
-import { AppError } from '../middleware/error-handler.js';
 import { db } from '@kaibase/db/client';
 import { collections } from '@kaibase/db/schema';
-import { eq, and, asc } from 'drizzle-orm';
+import { eq, asc } from 'drizzle-orm';
+import { findOne, updateOne } from '../route-helpers.js';
 import type { AppEnv } from '../types.js';
 
 export const collectionRoutes = new Hono<AppEnv>();
@@ -28,20 +28,8 @@ collectionRoutes.get('/', async (c) => {
 });
 
 collectionRoutes.get('/:id', async (c) => {
-  const workspaceId = c.get('workspaceId');
-  const id = c.req.param('id');
-
-  const rows = await db
-    .select()
-    .from(collections)
-    .where(and(eq(collections.id, id), eq(collections.workspaceId, workspaceId)))
-    .limit(1);
-
-  if (rows.length === 0) {
-    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
-  }
-
-  return c.json(rows[0]);
+  const row = await findOne(collections, c.req.param('id'), c.get('workspaceId'));
+  return c.json(row);
 });
 
 collectionRoutes.post('/', zValidator('json', createCollectionSchema), async (c) => {
@@ -63,19 +51,6 @@ collectionRoutes.post('/', zValidator('json', createCollectionSchema), async (c)
 });
 
 collectionRoutes.patch('/:id', zValidator('json', updateCollectionSchema), async (c) => {
-  const workspaceId = c.get('workspaceId');
-  const id = c.req.param('id');
-  const input = c.req.valid('json');
-
-  const updated = await db
-    .update(collections)
-    .set({ ...input, updatedAt: new Date() })
-    .where(and(eq(collections.id, id), eq(collections.workspaceId, workspaceId)))
-    .returning();
-
-  if (updated.length === 0) {
-    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
-  }
-
-  return c.json(updated[0]);
+  const result = await updateOne(collections, c.req.param('id'), c.get('workspaceId'), c.req.valid('json'));
+  return c.json(result);
 });

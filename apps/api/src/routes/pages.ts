@@ -3,10 +3,10 @@ import { zValidator } from '@hono/zod-validator';
 import { createPageSchema, updatePageSchema, generateId } from '@kaibase/shared';
 import { authMiddleware } from '../middleware/auth.js';
 import { workspaceMiddleware } from '../middleware/workspace.js';
-import { AppError } from '../middleware/error-handler.js';
 import { db } from '@kaibase/db/client';
 import { canonicalPages } from '@kaibase/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { findOne, updateOne } from '../route-helpers.js';
 import type { AppEnv } from '../types.js';
 
 export const pageRoutes = new Hono<AppEnv>();
@@ -48,20 +48,8 @@ pageRoutes.get('/', async (c) => {
 });
 
 pageRoutes.get('/:id', async (c) => {
-  const workspaceId = c.get('workspaceId');
-  const id = c.req.param('id');
-
-  const rows = await db
-    .select()
-    .from(canonicalPages)
-    .where(and(eq(canonicalPages.id, id), eq(canonicalPages.workspaceId, workspaceId)))
-    .limit(1);
-
-  if (rows.length === 0) {
-    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
-  }
-
-  return c.json(rows[0]);
+  const row = await findOne(canonicalPages, c.req.param('id'), c.get('workspaceId'));
+  return c.json(row);
 });
 
 pageRoutes.post('/', zValidator('json', createPageSchema), async (c) => {
@@ -91,53 +79,16 @@ pageRoutes.post('/', zValidator('json', createPageSchema), async (c) => {
 });
 
 pageRoutes.patch('/:id', zValidator('json', updatePageSchema), async (c) => {
-  const workspaceId = c.get('workspaceId');
-  const id = c.req.param('id');
-  const input = c.req.valid('json');
-
-  const updated = await db
-    .update(canonicalPages)
-    .set({ ...input, updatedAt: new Date() })
-    .where(and(eq(canonicalPages.id, id), eq(canonicalPages.workspaceId, workspaceId)))
-    .returning();
-
-  if (updated.length === 0) {
-    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
-  }
-
-  return c.json(updated[0]);
+  const result = await updateOne(canonicalPages, c.req.param('id'), c.get('workspaceId'), c.req.valid('json'));
+  return c.json(result);
 });
 
 pageRoutes.post('/:id/publish', async (c) => {
-  const workspaceId = c.get('workspaceId');
-  const id = c.req.param('id');
-
-  const updated = await db
-    .update(canonicalPages)
-    .set({ status: 'published', publishedAt: new Date(), updatedAt: new Date() })
-    .where(and(eq(canonicalPages.id, id), eq(canonicalPages.workspaceId, workspaceId)))
-    .returning();
-
-  if (updated.length === 0) {
-    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
-  }
-
-  return c.json(updated[0]);
+  const result = await updateOne(canonicalPages, c.req.param('id'), c.get('workspaceId'), { status: 'published', publishedAt: new Date() });
+  return c.json(result);
 });
 
 pageRoutes.post('/:id/archive', async (c) => {
-  const workspaceId = c.get('workspaceId');
-  const id = c.req.param('id');
-
-  const updated = await db
-    .update(canonicalPages)
-    .set({ status: 'archived', updatedAt: new Date() })
-    .where(and(eq(canonicalPages.id, id), eq(canonicalPages.workspaceId, workspaceId)))
-    .returning();
-
-  if (updated.length === 0) {
-    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
-  }
-
-  return c.json(updated[0]);
+  const result = await updateOne(canonicalPages, c.req.param('id'), c.get('workspaceId'), { status: 'archived' });
+  return c.json(result);
 });
