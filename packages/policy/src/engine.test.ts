@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { PolicyEngine } from './engine.js';
 import { getDefaultPolicyPack } from './defaults.js';
 import { matchRule } from './rules.js';
-import type { PolicyRule } from '@kaibase/shared';
+import type { PolicyPack, PolicyRule } from '@kaibase/shared';
 
 // ---------------------------------------------------------------------------
 // Helper: minimal rule factory
@@ -396,7 +396,7 @@ describe('PolicyEngine', () => {
     it('falls back to REVIEW_REQUIRED when defaultOutcome is missing at runtime', () => {
       const pack = getDefaultPolicyPack('ws-no-do');
       // Simulate corrupted/missing defaultOutcome at runtime (defense-in-depth)
-      const corrupted = { ...pack, defaultOutcome: undefined } as unknown as import('@kaibase/shared').PolicyPack;
+      const corrupted = { ...pack, defaultOutcome: undefined } as unknown as PolicyPack;
       const engine = new PolicyEngine(corrupted);
       const result = engine.evaluate({ actor_type: 'system', action_type: 'unknown' });
       expect(result.outcome).toBe('REVIEW_REQUIRED');
