@@ -1,0 +1,93 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn:*)",
+      "Bash(yarn workspace:*)",
+      "Bash(yarn workspaces:*)",
+      "Bash(yarn dev:*)",
+      "Bash(yarn build:*)",
+      "Bash(yarn test:*)",
+      "Bash(yarn lint:*)",
+      "Bash(yarn typecheck:*)",
+      "Bash(yarn db:*)",
+      "Bash(yarn docker:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx playwright:*)",
+      "Bash(npx drizzle-kit:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e:*)",
+      "Bash(docker compose:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git checkout -b:*)",
+      "Bash(git stash:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(cat:*)",
+      "Bash(wc:*)",
+      "Bash(which:*)",
+      "Bash(echo:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.rs)",
+      "WebFetch(domain:hono.dev)",
+      "WebFetch(domain:orm.drizzle.team)",
+      "WebFetch(domain:blocksuite.io)",
+      "WebFetch(domain:react.dev)",
+      "WebFetch(domain:tanstack.com)",
+      "WebFetch(domain:vanilla-extract.style)",
+      "WebFetch(domain:yjs.dev)",
+      "WebFetch(domain:bullmq.io)",
+      "WebFetch(domain:zod.dev)",
+      "WebFetch(domain:playwright.dev)",
+      "WebFetch(domain:vitest.dev)",
+      "WebFetch(domain:nodejs.org)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:npmjs.com)",
+      "mcp: context7",
+      "mcp: playwright"
+    ],
+    "deny": []
+  },
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstreamapi/context7-mcp@latest"],
+      "description": "Library documentation lookup — use for checking Drizzle, Hono, BlockSuite, React, vanilla-extract, BullMQ, Zod, Yjs, and other dependency docs"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/mcp-playwright@latest"],
+      "description": "Browser automation for E2E testing and UI verification — use for Playwright test development and debugging"
+    }
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_FILE_PATHS\" | grep -qE '\\.tsx?$'; then echo '⚠️  TypeScript file modified — remember to run typecheck before committing'; fi",
+            "description": "Remind about TypeScript checking after TS file edits"
+          }
+        ]
+      }
+    ],
+    "PreCommit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🔍 Pre-commit: Ensure yarn typecheck and yarn lint pass before committing'",
+            "description": "Pre-commit quality reminder"
+          }
+        ]
+      }
+    ]
+  }
+}
