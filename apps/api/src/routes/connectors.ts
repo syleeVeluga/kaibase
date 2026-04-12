@@ -107,7 +107,7 @@ connectorRoutes.post('/:id/sync', async (c) => {
 
   let ingested = 0;
   for (const file of files) {
-    const contentHash = sha256(file.filePath);
+    const contentHash = await sha256(file.filePath);
 
     // Check for existing source with same path for this connector
     const existing = await db

@@ -34,7 +34,7 @@ export const parseWorker = new Worker(
       const contentText = await parseFile(filePath, mimeType);
 
       // 2. Compute content hash for deduplication
-      const contentHash = sha256(contentText);
+      const contentHash = await sha256(contentText);
 
       // 3. Update source record: content_text, content_hash, status = 'processed'
       const [updated] = await db

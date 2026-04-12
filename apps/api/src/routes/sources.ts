@@ -67,8 +67,9 @@ sourceRoutes.post('/upload', async (c) => {
     throw new AppError(400, 'FILE_TOO_LARGE', 'errors.fileTooLarge');
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const contentHash = sha256(buffer);
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const contentHash = await sha256(arrayBuffer);
 
   // Check for duplicate
   const existing = await db
@@ -156,7 +157,7 @@ sourceRoutes.post('/url', zValidator('json', submitUrlSchema), async (c) => {
   const { url, title } = c.req.valid('json');
 
   const id = generateId();
-  const contentHash = sha256(url);
+  const contentHash = await sha256(url);
 
   // Check for duplicate
   const existing = await db
@@ -220,7 +221,7 @@ sourceRoutes.post('/text', zValidator('json', submitTextSchema), async (c) => {
   const { title, content } = c.req.valid('json');
 
   const id = generateId();
-  const contentHash = sha256(content);
+  const contentHash = await sha256(content);
 
   // Check for duplicate
   const existing = await db
