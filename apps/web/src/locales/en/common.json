@@ -17,7 +17,21 @@
     "approve": "Approve",
     "reject": "Reject",
     "connect": "Connect",
-    "upload": "Upload"
+    "upload": "Upload",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "createAccount": "Create account"
+  },
+  "auth": {
+    "signInTitle": "Sign in to your account",
+    "registerTitle": "Create your account",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "signingIn": "Signing in...",
+    "creatingAccount": "Creating account..."
   },
   "status": {
     "draft": "Draft",

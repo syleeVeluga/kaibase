@@ -17,7 +17,21 @@
     "approve": "승인",
     "reject": "거부",
     "connect": "연결",
-    "upload": "업로드"
+    "upload": "업로드",
+    "signIn": "로그인",
+    "signOut": "로그아웃",
+    "createAccount": "계정 만들기"
+  },
+  "auth": {
+    "signInTitle": "계정에 로그인",
+    "registerTitle": "계정 만들기",
+    "email": "이메일",
+    "password": "비밀번호",
+    "name": "이름",
+    "noAccount": "계정이 없으신가요?",
+    "hasAccount": "이미 계정이 있으신가요?",
+    "signingIn": "로그인 중...",
+    "creatingAccount": "계정 생성 중..."
   },
   "status": {
     "draft": "초안",

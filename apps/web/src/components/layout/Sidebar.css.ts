@@ -15,13 +15,25 @@ export const logo = style({
   fontSize: vars.fontSize.xl,
   fontWeight: 700,
   padding: `${vars.space.md} ${vars.space.sm}`,
+  marginBottom: vars.space.xs,
+});
+
+export const workspaceName = style({
+  fontSize: vars.fontSize.xs,
+  color: vars.color.textMuted,
+  fontWeight: 500,
+  padding: `0 ${vars.space.sm}`,
   marginBottom: vars.space.lg,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 });
 
 export const nav = style({
   display: 'flex',
   flexDirection: 'column',
   gap: vars.space.xs,
+  flex: 1,
 });
 
 export const navLink = style({
@@ -49,3 +61,33 @@ export const navLinkActive = style([
     },
   },
 ]);
+
+export const userSection = style({
+  borderTop: `1px solid ${vars.color.border}`,
+  paddingTop: vars.space.md,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: vars.space.xs,
+});
+
+export const userName = style({
+  fontSize: vars.fontSize.sm,
+  fontWeight: 500,
+  color: vars.color.text,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+});
+
+export const logoutButton = style({
+  fontSize: vars.fontSize.xs,
+  color: vars.color.textMuted,
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  textAlign: 'left',
+  padding: 0,
+  ':hover': {
+    color: vars.color.error,
+  },
+});

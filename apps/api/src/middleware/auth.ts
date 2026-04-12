@@ -28,10 +28,26 @@ export function authMiddleware(): MiddlewareHandler {
   };
 }
 
-export async function signToken(payload: { sub: string; email: string }): Promise<string> {
-  return new jose.SignJWT(payload)
+export async function signAccessToken(payload: { sub: string; email: string }): Promise<string> {
+  return new jose.SignJWT({ ...payload, type: 'access' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('15m')
+    .sign(JWT_SECRET);
+}
+
+export async function signRefreshToken(payload: { sub: string; email: string }): Promise<string> {
+  return new jose.SignJWT({ ...payload, type: 'refresh' })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
     .sign(JWT_SECRET);
+}
+
+export async function verifyRefreshToken(token: string): Promise<{ sub: string; email: string }> {
+  const { payload } = await jose.jwtVerify(token, JWT_SECRET);
+  if (payload['type'] !== 'refresh') {
+    throw new Error('Not a refresh token');
+  }
+  return { sub: payload['sub'] as string, email: payload['email'] as string };
 }

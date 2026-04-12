@@ -1,30 +1,58 @@
 const BASE_URL = '/api/v1';
 
 export class ApiClient {
-  private token: string | null = null;
+  private refreshPromise: Promise<boolean> | null = null;
 
-  setToken(token: string): void {
-    this.token = token;
+  private getToken(): string | null {
+    return localStorage.getItem('accessToken');
   }
 
-  clearToken(): void {
-    this.token = null;
+  private getRefreshToken(): string | null {
+    return localStorage.getItem('refreshToken');
+  }
+
+  setTokens(accessToken: string, refreshToken: string): void {
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('refreshToken', refreshToken);
+  }
+
+  clearTokens(): void {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.getToken();
   }
 
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       ...Object.fromEntries(Object.entries(options.headers ?? {})),
     };
 
-    if (this.token) {
-      headers['Authorization'] = `Bearer ${this.token}`;
+    // Don't set Content-Type for FormData (browser sets it with boundary)
+    if (!(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
     }
 
-    const response = await fetch(`${BASE_URL}${path}`, {
+    const token = this.getToken();
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    let response = await fetch(`${BASE_URL}${path}`, {
       ...options,
       headers,
     });
+
+    // Auto-refresh on 401
+    if (response.status === 401 && this.getRefreshToken()) {
+      const refreshed = await this.tryRefresh();
+      if (refreshed) {
+        headers['Authorization'] = `Bearer ${this.getToken() ?? ''}`;
+        response = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+      }
+    }
 
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
@@ -34,20 +62,74 @@ export class ApiClient {
     return response.json() as Promise<T>;
   }
 
+  private tryRefresh(): Promise<boolean> {
+    if (this.refreshPromise) return this.refreshPromise;
+    this.refreshPromise = this.doRefresh();
+    return this.refreshPromise.finally(() => { this.refreshPromise = null; });
+  }
+
+  private async doRefresh(): Promise<boolean> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) return false;
+
+    try {
+      const response = await fetch(`${BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        this.clearTokens();
+        return false;
+      }
+
+      const data = (await response.json()) as {
+        accessToken: string;
+        refreshToken: string;
+      };
+      this.setTokens(data.accessToken, data.refreshToken);
+      return true;
+    } catch {
+      this.clearTokens();
+      return false;
+    }
+  }
+
   get<T>(path: string): Promise<T> {
     return this.request<T>(path);
   }
 
   post<T>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>(path, { method: 'POST', body: body ? JSON.stringify(body) : undefined });
+    return this.request<T>(path, {
+      method: 'POST',
+      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+    });
   }
 
   patch<T>(path: string, body: unknown): Promise<T> {
-    return this.request<T>(path, { method: 'PATCH', body: JSON.stringify(body) });
+    return this.request<T>(path, {
+      method: 'PATCH',
+      body: body instanceof FormData ? body : JSON.stringify(body),
+    });
+  }
+
+  put<T>(path: string, body: unknown): Promise<T> {
+    return this.request<T>(path, {
+      method: 'PUT',
+      body: body instanceof FormData ? body : JSON.stringify(body),
+    });
   }
 
   delete<T>(path: string): Promise<T> {
     return this.request<T>(path, { method: 'DELETE' });
+  }
+
+  upload<T>(path: string, formData: FormData): Promise<T> {
+    return this.request<T>(path, {
+      method: 'POST',
+      body: formData,
+    });
   }
 }
 

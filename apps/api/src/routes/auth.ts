@@ -2,7 +2,12 @@ import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
-import { signToken } from '../middleware/auth.js';
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+  authMiddleware,
+} from '../middleware/auth.js';
 import { AppError } from '../middleware/error-handler.js';
 import { db } from '@kaibase/db/client';
 import { users } from '@kaibase/db/schema';
@@ -23,6 +28,15 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
+const refreshSchema = z.object({
+  refreshToken: z.string(),
+});
+
+const updateProfileSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  avatarUrl: z.string().url().nullish(),
+});
+
 authRoutes.post('/register', zValidator('json', registerSchema), async (c) => {
   const { email, password, name } = c.req.valid('json');
 
@@ -36,8 +50,13 @@ authRoutes.post('/register', zValidator('json', registerSchema), async (c) => {
 
   await db.insert(users).values({ id, email, name, passwordHash });
 
-  const token = await signToken({ sub: id, email });
-  return c.json({ token, user: { id, email, name } }, 201);
+  const accessToken = await signAccessToken({ sub: id, email });
+  const refreshToken = await signRefreshToken({ sub: id, email });
+
+  return c.json(
+    { accessToken, refreshToken, user: { id, email, name } },
+    201,
+  );
 });
 
 authRoutes.post('/login', zValidator('json', loginSchema), async (c) => {
@@ -54,6 +73,79 @@ authRoutes.post('/login', zValidator('json', loginSchema), async (c) => {
     throw new AppError(401, 'INVALID_CREDENTIALS', 'errors.invalidCredentials');
   }
 
-  const token = await signToken({ sub: user.id, email: user.email });
-  return c.json({ token, user: { id: user.id, email: user.email, name: user.name } });
+  const accessToken = await signAccessToken({ sub: user.id, email: user.email });
+  const refreshToken = await signRefreshToken({ sub: user.id, email: user.email });
+
+  return c.json({
+    accessToken,
+    refreshToken,
+    user: { id: user.id, email: user.email, name: user.name },
+  });
+});
+
+authRoutes.post('/refresh', zValidator('json', refreshSchema), async (c) => {
+  const { refreshToken } = c.req.valid('json');
+
+  let payload: { sub: string; email: string };
+  try {
+    payload = await verifyRefreshToken(refreshToken);
+  } catch {
+    throw new AppError(401, 'INVALID_TOKEN', 'errors.invalidToken');
+  }
+
+  const rows = await db.select().from(users).where(eq(users.id, payload.sub)).limit(1);
+  if (rows.length === 0) {
+    throw new AppError(401, 'INVALID_TOKEN', 'errors.invalidToken');
+  }
+
+  const accessToken = await signAccessToken({ sub: payload.sub, email: payload.email });
+  const newRefreshToken = await signRefreshToken({ sub: payload.sub, email: payload.email });
+
+  return c.json({ accessToken, refreshToken: newRefreshToken });
+});
+
+authRoutes.get('/me', authMiddleware(), async (c) => {
+  const { userId } = c.get('user');
+
+  const rows = await db.select({
+    id: users.id,
+    email: users.email,
+    name: users.name,
+    avatarUrl: users.avatarUrl,
+    createdAt: users.createdAt,
+  }).from(users).where(eq(users.id, userId)).limit(1);
+
+  if (rows.length === 0) {
+    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
+  }
+
+  return c.json({ user: rows[0] });
+});
+
+authRoutes.put('/me', authMiddleware(), zValidator('json', updateProfileSchema), async (c) => {
+  const { userId } = c.get('user');
+  const updates = c.req.valid('json');
+
+  const rows = await db
+    .update(users)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(eq(users.id, userId))
+    .returning({
+      id: users.id,
+      email: users.email,
+      name: users.name,
+      avatarUrl: users.avatarUrl,
+    });
+
+  if (rows.length === 0) {
+    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
+  }
+
+  return c.json({ user: rows[0] });
+});
+
+authRoutes.post('/logout', authMiddleware(), async (c) => {
+  // Stateless JWT — client discards tokens. Server-side token revocation
+  // can be added later with a Redis blocklist if needed.
+  return c.json({ success: true });
 });
