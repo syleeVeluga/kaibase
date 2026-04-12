@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { askQuestionSchema, promoteAnswerSchema, generateId } from '@kaibase/shared';
+import { askQuestionSchema, promoteAnswerSchema, generateId, type PolicyPack } from '@kaibase/shared';
 import { authMiddleware } from '../middleware/auth.js';
 import { workspaceMiddleware } from '../middleware/workspace.js';
 import { AppError } from '../middleware/error-handler.js';
@@ -178,7 +178,7 @@ qaRoutes.get('/history', async (c) => {
 
   const nextCursor =
     hasMore && events.length > 0
-      ? events[events.length - 1]!.createdAt.toISOString()
+      ? events[events.length - 1]?.createdAt.toISOString() ?? null
       : null;
 
   return c.json({ events, nextCursor });
@@ -209,11 +209,10 @@ qaRoutes.post(
       )
       .limit(1);
 
-    if (answerRows.length === 0) {
+    const answerEvent = answerRows[0];
+    if (!answerEvent) {
       throw new AppError(404, 'ANSWER_NOT_FOUND', 'errors.notFound');
     }
-
-    const answerEvent = answerRows[0]!;
     const detail = answerEvent.detail as {
       question: string;
       answer: string;
@@ -239,7 +238,7 @@ qaRoutes.post(
         source_type: 'qa_answer',
         confidence: detail.confidence,
       };
-      const engine = new PolicyEngine(activePack as unknown as import('@kaibase/shared').PolicyPack);
+      const engine = new PolicyEngine(activePack as unknown as PolicyPack);
       const decision = engine.evaluate(policyContext);
       outcome = decision.outcome;
       matchedRuleId = decision.matchedRuleId ?? undefined;

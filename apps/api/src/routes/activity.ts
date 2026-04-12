@@ -60,7 +60,7 @@ activityRoutes.get('/', async (c) => {
 
   const nextCursor =
     hasMore && events.length > 0
-      ? events[events.length - 1]!.createdAt.toISOString()
+      ? events[events.length - 1]?.createdAt.toISOString() ?? null
       : null;
 
   return c.json({ events, nextCursor });
