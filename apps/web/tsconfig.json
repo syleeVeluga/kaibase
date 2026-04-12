@@ -4,6 +4,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "lib": ["ES2024", "DOM", "DOM.Iterable"],
+    "types": ["node"],
     "jsx": "react-jsx",
     "noEmit": true
   },

@@ -5,7 +5,7 @@ import { authMiddleware } from '../middleware/auth.js';
 import { workspaceMiddleware } from '../middleware/workspace.js';
 import { AppError } from '../middleware/error-handler.js';
 import { db } from '@kaibase/db/client';
-import { reviewTasks, canonicalPages } from '@kaibase/db/schema';
+import { reviewTasks, canonicalPages, type ReviewTask } from '@kaibase/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import type { AppEnv } from '../types.js';
 
@@ -84,7 +84,7 @@ async function resolveReviewAction(
   userId: string,
   status: 'approved' | 'rejected',
   reviewNotes: string | undefined,
-) {
+): Promise<ReviewTask> {
   return db.transaction(async (tx) => {
     const updated = await tx
       .update(reviewTasks)
