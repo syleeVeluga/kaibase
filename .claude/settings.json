@@ -71,8 +71,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if echo \"$CLAUDE_FILE_PATHS\" | grep -qE '\\.tsx?$'; then echo '⚠️  TypeScript file modified — remember to run typecheck before committing'; fi",
-            "description": "Remind about TypeScript checking after TS file edits"
+            "command": "echo \"$CLAUDE_FILE_PATHS\" | tr ',' '\\n' | grep -oE '\\.(tsx?|css\\.ts)$' > /dev/null 2>&1 || exit 0; TSCONFIG=''; for f in $(echo \"$CLAUDE_FILE_PATHS\" | tr ',' '\\n'); do case \"$f\" in apps/web/*|apps/web\\\\*) TSCONFIG='apps/web/tsconfig.json'; break;; apps/api/*|apps/api\\\\*) TSCONFIG='apps/api/tsconfig.json'; break;; apps/workers/*|apps/workers\\\\*) TSCONFIG='apps/workers/tsconfig.json'; break;; packages/shared/*|packages/shared\\\\*) TSCONFIG='packages/shared/tsconfig.json'; break;; packages/db/*|packages/db\\\\*) TSCONFIG='packages/db/tsconfig.json'; break;; packages/ai/*|packages/ai\\\\*) TSCONFIG='packages/ai/tsconfig.json'; break;; packages/policy/*|packages/policy\\\\*) TSCONFIG='packages/policy/tsconfig.json'; break;; packages/editor/*|packages/editor\\\\*) TSCONFIG='packages/editor/tsconfig.json'; break;; packages/connectors/*|packages/connectors\\\\*) TSCONFIG='packages/connectors/tsconfig.json'; break;; esac; done; if [ -n \"$TSCONFIG\" ] && [ -f \"$TSCONFIG\" ]; then echo \"[hook] Running typecheck on $TSCONFIG...\"; npx tsc -p \"$TSCONFIG\" --noEmit 2>&1 | tail -20; else echo '[hook] No matching tsconfig found — skipping typecheck'; fi",
+            "timeout": 30000,
+            "description": "Auto-typecheck the workspace whose TS files were modified"
           }
         ]
       }
