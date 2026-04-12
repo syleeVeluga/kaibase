@@ -16,6 +16,10 @@
     "citations": "인용",
     "sources": "소스",
     "lastUpdated": "마지막 업데이트",
-    "createdBy": "작성자"
+    "createdBy": "작성자",
+    "pageContent": "페이지 내용",
+    "noContent": "아직 내용이 없습니다.",
+    "metadata": "메타데이터",
+    "language": "언어"
   }
 }

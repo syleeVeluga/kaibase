@@ -23,8 +23,11 @@ export {
   collectionTypeSchema,
   createPageSchema,
   updatePageSchema,
+  reviewActionSchema,
+  type ContentBlock,
   type CreatePageInput,
   type UpdatePageInput,
+  type ReviewActionInput,
 } from './page.schema.js';
 
 export {

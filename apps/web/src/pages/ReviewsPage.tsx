@@ -1,7 +1,9 @@
+import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
+import { StatusBadge } from '../components/StatusBadge.js';
 import * as shared from '../theme/shared.css.js';
 
 interface ReviewTask {
@@ -77,9 +79,13 @@ export function ReviewsPage(): React.ReactElement {
           <tbody>
             {reviews.map((r) => (
               <tr key={r.id}>
-                <td className={shared.td}>{r.taskType.replace('_', ' ')}</td>
                 <td className={shared.td}>
-                  <ReviewBadge status={r.status} />
+                  <Link to={`/reviews/${r.id}`}>
+                    {r.taskType.replaceAll('_', ' ')}
+                  </Link>
+                </td>
+                <td className={shared.td}>
+                  <StatusBadge status={r.status} />
                 </td>
                 <td className={shared.td}>
                   {new Date(r.createdAt).toLocaleDateString()}
@@ -104,7 +110,7 @@ export function ReviewsPage(): React.ReactElement {
                     </div>
                   )}
                   {r.status !== 'pending' && (
-                    <span style={{ fontSize: '12px', color: '#64748b' }}>
+                    <span className={shared.textMeta}>
                       {r.reviewedAt
                         ? `Reviewed ${new Date(r.reviewedAt).toLocaleDateString()}`
                         : ''}
@@ -120,17 +126,3 @@ export function ReviewsPage(): React.ReactElement {
   );
 }
 
-function ReviewBadge({ status }: { status: string }): React.ReactElement {
-  const classMap: Record<string, string> = {
-    pending: shared.badgePending,
-    approved: shared.badgeProcessed,
-    rejected: shared.badgeFailed,
-    expired: shared.badgeDraft,
-  };
-
-  return (
-    <span className={classMap[status] ?? shared.badge}>
-      {status}
-    </span>
-  );
-}

@@ -20,7 +20,10 @@
     "upload": "Upload",
     "signIn": "Sign in",
     "signOut": "Sign out",
-    "createAccount": "Create account"
+    "createAccount": "Create account",
+    "archive": "Archive",
+    "back": "Back",
+    "view": "View"
   },
   "auth": {
     "signInTitle": "Sign in to your account",

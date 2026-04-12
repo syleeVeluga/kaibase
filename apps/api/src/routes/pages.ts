@@ -118,3 +118,20 @@ pageRoutes.post('/:id/publish', async (c) => {
 
   return c.json(updated[0]);
 });
+
+pageRoutes.post('/:id/archive', async (c) => {
+  const workspaceId = c.get('workspaceId');
+  const id = c.req.param('id');
+
+  const updated = await db
+    .update(canonicalPages)
+    .set({ status: 'archived', updatedAt: new Date() })
+    .where(and(eq(canonicalPages.id, id), eq(canonicalPages.workspaceId, workspaceId)))
+    .returning();
+
+  if (updated.length === 0) {
+    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
+  }
+
+  return c.json(updated[0]);
+});

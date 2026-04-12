@@ -79,6 +79,12 @@ export const userName = style({
   whiteSpace: 'nowrap',
 });
 
+export const navLinkContent = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space.sm,
+});
+
 export const logoutButton = style({
   fontSize: vars.fontSize.xs,
   color: vars.color.textMuted,

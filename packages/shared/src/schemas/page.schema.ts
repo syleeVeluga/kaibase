@@ -37,7 +37,23 @@ export const updatePageSchema = z.object({
   titleKo: z.string().max(500).nullable().optional(),
   status: pageStatusSchema.optional(),
   collectionId: z.string().uuid().nullable().optional(),
+  contentSnapshot: z.string().optional(),
 });
+
+export const reviewActionSchema = z.object({
+  reviewNotes: z.string().max(2000).optional(),
+});
+
+export interface ContentBlock {
+  type: 'heading' | 'paragraph' | 'list' | 'quote' | 'table' | 'divider';
+  level?: 1 | 2 | 3;
+  content?: string;
+  items?: string[];
+  headers?: string[];
+  rows?: string[][];
+  citations?: string[];
+}
 
 export type CreatePageInput = z.infer<typeof createPageSchema>;
 export type UpdatePageInput = z.infer<typeof updatePageSchema>;
+export type ReviewActionInput = z.infer<typeof reviewActionSchema>;

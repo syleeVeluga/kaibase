@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../lib/api-client.js';
 import { useWorkspace } from '../../lib/workspace-context.js';
+import { StatusBadge } from '../../components/StatusBadge.js';
 import * as shared from '../../theme/shared.css.js';
 import * as styles from './SourcesPage.css.js';
 
@@ -412,19 +413,3 @@ function ConnectorPanel({ workspaceId }: { workspaceId: string }): React.ReactEl
   );
 }
 
-/* ---------- Status Badge ---------- */
-
-function StatusBadge({ status }: { status: string }): React.ReactElement {
-  const classMap: Record<string, string> = {
-    pending: shared.badgePending,
-    processing: shared.badgeProcessing,
-    processed: shared.badgeProcessed,
-    failed: shared.badgeFailed,
-  };
-
-  return (
-    <span className={classMap[status] ?? shared.badge}>
-      {status}
-    </span>
-  );
-}

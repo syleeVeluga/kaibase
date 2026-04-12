@@ -1,7 +1,9 @@
+import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
+import { StatusBadge } from '../components/StatusBadge.js';
 import * as shared from '../theme/shared.css.js';
 
 interface Page {
@@ -69,7 +71,9 @@ export function PagesPage(): React.ReactElement {
           <tbody>
             {pages.map((p) => (
               <tr key={p.id}>
-                <td className={shared.td}>{p.title}</td>
+                <td className={shared.td}>
+                  <Link to={`/pages/${p.id}`}>{p.title}</Link>
+                </td>
                 <td className={shared.td}>{p.pageType}</td>
                 <td className={shared.td}>{p.createdBy}</td>
                 <td className={shared.td}>
@@ -98,17 +102,3 @@ export function PagesPage(): React.ReactElement {
   );
 }
 
-function StatusBadge({ status }: { status: string }): React.ReactElement {
-  const classMap: Record<string, string> = {
-    draft: shared.badgeDraft,
-    published: shared.badgePublished,
-    review_pending: shared.badgePending,
-    archived: shared.badgeDraft,
-  };
-
-  return (
-    <span className={classMap[status] ?? shared.badge}>
-      {status.replace('_', ' ')}
-    </span>
-  );
-}

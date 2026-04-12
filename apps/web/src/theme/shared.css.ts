@@ -141,3 +141,21 @@ export const loading = style({
   padding: vars.space.xxl,
   color: vars.color.textMuted,
 });
+
+export const backLink = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: vars.space.xs,
+  color: vars.color.textSecondary,
+  textDecoration: 'none',
+  fontSize: vars.fontSize.sm,
+  marginBottom: vars.space.md,
+  ':hover': {
+    color: vars.color.text,
+  },
+});
+
+export const textMeta = style({
+  fontSize: vars.fontSize.xs,
+  color: vars.color.textSecondary,
+});

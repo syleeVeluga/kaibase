@@ -20,7 +20,10 @@
     "upload": "업로드",
     "signIn": "로그인",
     "signOut": "로그아웃",
-    "createAccount": "계정 만들기"
+    "createAccount": "계정 만들기",
+    "archive": "보관",
+    "back": "뒤로",
+    "view": "보기"
   },
   "auth": {
     "signInTitle": "계정에 로그인",

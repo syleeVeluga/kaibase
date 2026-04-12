@@ -12,6 +12,12 @@
   "detail": {
     "aiReasoning": "AI Reasoning",
     "proposedChange": "Proposed Change",
-    "assignedTo": "Assigned to"
+    "assignedTo": "Assigned to",
+    "currentContent": "Current Content",
+    "reviewNotes": "Review Notes",
+    "reviewNotesPlaceholder": "Add notes about your decision...",
+    "noExistingContent": "New page — no existing content",
+    "noProposedContent": "No proposed content",
+    "reviewedAt": "Reviewed {{date}}"
   }
 }

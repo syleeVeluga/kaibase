@@ -12,6 +12,12 @@
   "detail": {
     "aiReasoning": "AI 추론",
     "proposedChange": "제안된 변경",
-    "assignedTo": "담당자"
+    "assignedTo": "담당자",
+    "currentContent": "현재 내용",
+    "reviewNotes": "리뷰 메모",
+    "reviewNotesPlaceholder": "결정에 대한 메모를 추가하세요...",
+    "noExistingContent": "새 페이지 — 기존 내용 없음",
+    "noProposedContent": "제안된 내용 없음",
+    "reviewedAt": "{{date}} 리뷰됨"
   }
 }
