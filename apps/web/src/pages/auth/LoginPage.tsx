@@ -25,7 +25,7 @@ export function LoginPage(): React.ReactElement {
 
     try {
       await login(email, password);
-      navigate('/inbox', { replace: true });
+      navigate('/', { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {
         const code = err.body['code'] as string | undefined;
@@ -45,7 +45,7 @@ export function LoginPage(): React.ReactElement {
     setLoading(true);
     try {
       await devLogin();
-      navigate('/inbox', { replace: true });
+      navigate('/', { replace: true });
     } catch {
       setError(t('internal', { ns: 'errors' }));
     } finally {

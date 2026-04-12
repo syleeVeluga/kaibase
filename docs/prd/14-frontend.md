@@ -26,7 +26,7 @@ The frontend is a custom web application that uses BlockSuite (MPL 2.0) as its e
 
 ```
 /                          → Dashboard / workspace overview + Knowledge Health Dashboard
-/onboarding                → Progressive onboarding flow (first-time users)
+/                        first-time empty state → Create workspace / connect knowledge
 /inbox                     → Inbox (newly ingested sources + initial AI-generated pages)
 /pages                     → All pages (browsable, filterable)
 /pages/:pageId             → Page view/edit (BlockSuite PageEditor)
@@ -62,6 +62,8 @@ The onboarding flow must demonstrate value within the first 10 minutes. This is 
 
 ```
 Step 1: "Connect your knowledge"
+  → New users land on the dashboard, which either shows the active workspace overview or an empty state to create the first workspace
+  → After workspace creation, the first-run CTA drives directly into source connection
   → User connects a local folder path (or uploads a few files as fallback)
   → Visual: folder picker / path input with preview of detected files
   → "Found 47 documents in ~/Documents/project-alpha/"
@@ -84,6 +86,8 @@ Step 4: "Set your preferences" (optional)
 ```
 
 **Key principle:** The user should see AI-generated knowledge pages from *their own documents* within 5 minutes of starting. This is the "aha moment" that justifies the product.
+
+**Entry principle:** Authenticated users should not hit a separate setup gate before seeing the product shell. The dashboard is the first surface, and it owns the first-workspace empty state when needed.
 
 ---
 

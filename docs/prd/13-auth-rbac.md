@@ -25,6 +25,7 @@ Authentication and Role-Based Access Control are handled as an external layer, s
 ### Phase 0: Email/Password + OAuth
 
 - Email/password registration and login
+- Email/password registration auto-creates the user's first workspace with owner role and default policy pack
 - OAuth 2.0 via Google (primary)
 - OAuth 2.0 via GitHub (secondary)
 - JWT-based session tokens
@@ -127,7 +128,7 @@ Admin invites user by email
 
 ```
 # Authentication
-POST   /api/v1/auth/register                             -- register with email/password
+POST   /api/v1/auth/register                             -- register with email/password and bootstrap first workspace
 POST   /api/v1/auth/login                                -- login
 POST   /api/v1/auth/refresh                              -- refresh token
 POST   /api/v1/auth/logout                               -- logout
@@ -137,7 +138,7 @@ GET    /api/v1/auth/me                                   -- current user profile
 PUT    /api/v1/auth/me                                   -- update profile
 
 # Workspace Management
-POST   /api/v1/workspaces                                -- create workspace
+POST   /api/v1/workspaces                                -- create additional workspace
 GET    /api/v1/workspaces                                -- list user's workspaces
 GET    /api/v1/workspaces/:wid                           -- get workspace details
 PUT    /api/v1/workspaces/:wid                           -- update workspace settings

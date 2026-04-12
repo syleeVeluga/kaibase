@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../lib/api-client.js';
@@ -22,9 +24,12 @@ interface HealthData {
 }
 
 export function DashboardPage(): React.ReactElement {
-  const { t } = useTranslation(['dashboard', 'common']);
-  const { workspace } = useWorkspace();
+  const { t } = useTranslation(['dashboard', 'common', 'errors']);
+  const { workspace, createWorkspace } = useWorkspace();
   const wid = workspace?.id;
+  const [name, setName] = useState('');
+  const [createError, setCreateError] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
 
   const statsQuery = useQuery({
     queryKey: ['dashboard', 'stats', wid],
@@ -38,7 +43,77 @@ export function DashboardPage(): React.ReactElement {
     enabled: !!wid,
   });
 
-  if (!wid) return <div className={shared.loading}>Select a workspace</div>;
+  function toSlug(value: string): string {
+    const slug = value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 100);
+
+    return slug || `workspace-${Date.now()}`;
+  }
+
+  async function handleCreateWorkspace(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    setCreateError('');
+    setIsCreating(true);
+
+    try {
+      await createWorkspace({
+        name: name.trim(),
+        slug: toSlug(name),
+      });
+      setName('');
+    } catch {
+      setCreateError(t('internal', { ns: 'errors' }));
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
+  if (!wid) {
+    return (
+      <div>
+        <div className={shared.pageHeader}>
+          <h1 className={shared.pageTitle}>{t('dashboard:title')}</h1>
+        </div>
+
+        <section className={styles.emptyStateCard}>
+          <div className={styles.emptyStateContent}>
+            <h2 className={styles.emptyStateTitle}>{t('dashboard:emptyState.title')}</h2>
+            <p className={styles.emptyStateDescription}>{t('dashboard:emptyState.description')}</p>
+          </div>
+
+          <form className={styles.emptyStateForm} onSubmit={handleCreateWorkspace}>
+            <label className={styles.emptyStateLabel} htmlFor="workspace-name">
+              {t('dashboard:emptyState.nameLabel')}
+            </label>
+            <input
+              id="workspace-name"
+              className={styles.emptyStateInput}
+              type="text"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder={t('dashboard:emptyState.placeholder')}
+              required
+            />
+
+            {createError && <div className={shared.errorBanner}>{createError}</div>}
+
+            <button
+              className={shared.primaryButton}
+              type="submit"
+              disabled={isCreating || !name.trim()}
+            >
+              {isCreating
+                ? t('dashboard:emptyState.creating')
+                : t('dashboard:emptyState.createAction')}
+            </button>
+          </form>
+        </section>
+      </div>
+    );
+  }
 
   const stats = statsQuery.data;
   const health = healthQuery.data;

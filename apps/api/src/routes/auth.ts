@@ -9,7 +9,7 @@ import {
   authMiddleware,
 } from '../middleware/auth.js';
 import { AppError } from '../middleware/error-handler.js';
-import { db } from '@kaibase/db/client';
+import { db, type Db } from '@kaibase/db/client';
 import { users, workspaces, workspaceMembers, policyPacks } from '@kaibase/db/schema';
 import { eq } from 'drizzle-orm';
 import { generateId } from '@kaibase/shared';
@@ -38,6 +38,56 @@ const updateProfileSchema = z.object({
   avatarUrl: z.string().url().nullish(),
 });
 
+type DbTransaction = Parameters<Parameters<Db['transaction']>[0]>[0];
+
+function buildDefaultWorkspaceName(name: string): string {
+  return name.trim();
+}
+
+function buildDefaultWorkspaceSlug(name: string, uniqueSuffix: string): string {
+  const baseSlug = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 90);
+
+  const suffix = uniqueSuffix.replace(/-/g, '').slice(0, 8).toLowerCase();
+  return baseSlug ? `${baseSlug}-${suffix}` : `workspace-${suffix}`;
+}
+
+async function createDefaultWorkspace(
+  tx: DbTransaction,
+  userId: string,
+  workspaceName: string,
+  workspaceSlug: string,
+): Promise<void> {
+  const workspaceId = generateId();
+
+  await tx.insert(workspaces).values({
+    id: workspaceId,
+    name: workspaceName,
+    slug: workspaceSlug,
+  });
+  await tx.insert(workspaceMembers).values({
+    workspaceId,
+    userId,
+    role: 'owner',
+  });
+
+  const policyPackId = generateId();
+  const defaultPack = getDefaultPolicyPack(workspaceId, policyPackId);
+  await tx.insert(policyPacks).values({
+    id: policyPackId,
+    workspaceId,
+    name: defaultPack.name,
+    version: defaultPack.version,
+    isActive: true,
+    rules: defaultPack.rules,
+    defaultOutcome: defaultPack.defaultOutcome,
+    createdBy: userId,
+  });
+}
+
 authRoutes.post('/register', zValidator('json', registerSchema), async (c) => {
   const { email, password, name } = c.req.valid('json');
 
@@ -48,8 +98,13 @@ authRoutes.post('/register', zValidator('json', registerSchema), async (c) => {
 
   const passwordHash = await bcrypt.hash(password, 12);
   const id = generateId();
+  const workspaceName = buildDefaultWorkspaceName(name);
+  const workspaceSlug = buildDefaultWorkspaceSlug(workspaceName, id);
 
-  await db.insert(users).values({ id, email, name, passwordHash });
+  await db.transaction(async (tx) => {
+    await tx.insert(users).values({ id, email, name, passwordHash });
+    await createDefaultWorkspace(tx, id, workspaceName, workspaceSlug);
+  });
 
   const accessToken = await signAccessToken({ sub: id, email });
   const refreshToken = await signRefreshToken({ sub: id, email });
@@ -181,30 +236,13 @@ authRoutes.post('/dev-login', async (c) => {
     .limit(1);
 
   if (memberRows.length === 0) {
-    const wsId = generateId();
     await db.transaction(async (tx) => {
-      await tx.insert(workspaces).values({
-        id: wsId,
-        name: 'Dev Workspace',
-        slug: 'dev-workspace',
-      });
-      await tx.insert(workspaceMembers).values({
-        workspaceId: wsId,
-        userId: devUser.id,
-        role: 'owner',
-      });
-      const packId = generateId();
-      const defaultPack = getDefaultPolicyPack(wsId, packId);
-      await tx.insert(policyPacks).values({
-        id: packId,
-        workspaceId: wsId,
-        name: defaultPack.name,
-        version: defaultPack.version,
-        isActive: true,
-        rules: defaultPack.rules,
-        defaultOutcome: defaultPack.defaultOutcome,
-        createdBy: devUser.id,
-      });
+      await createDefaultWorkspace(
+        tx,
+        devUser.id,
+        'Dev Workspace',
+        buildDefaultWorkspaceSlug('Dev Workspace', devUser.id),
+      );
     });
   }
 

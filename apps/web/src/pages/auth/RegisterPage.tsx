@@ -24,7 +24,7 @@ export function RegisterPage(): React.ReactElement {
 
     try {
       await register(email, password, name);
-      navigate('/inbox', { replace: true });
+      navigate('/', { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {
         const code = err.body['code'] as string | undefined;

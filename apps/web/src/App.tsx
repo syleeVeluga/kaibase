@@ -5,7 +5,6 @@ import { WorkspaceProvider, useWorkspace } from './lib/workspace-context.js';
 import { Layout } from './components/layout/Layout.js';
 import { LoginPage } from './pages/auth/LoginPage.js';
 import { RegisterPage } from './pages/auth/RegisterPage.js';
-import { WorkspaceSetupPage } from './pages/auth/WorkspaceSetupPage.js';
 import { InboxPage } from './pages/InboxPage.js';
 import { PagesPage } from './pages/PagesPage.js';
 import { ReviewsPage } from './pages/ReviewsPage.js';
@@ -32,29 +31,29 @@ export function App(): React.ReactElement {
               <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
               <Route path="/register" element={<GuestOnly><RegisterPage /></GuestOnly>} />
 
-              {/* Workspace setup */}
-              <Route path="/setup" element={<RequireAuth><WorkspaceSetupPage /></RequireAuth>} />
+              {/* Legacy workspace setup route */}
+              <Route path="/setup" element={<RequireAuth><Navigate to="/" replace /></RequireAuth>} />
 
               {/* Protected app routes */}
-              <Route path="/" element={<RequireWorkspace><Layout /></RequireWorkspace>}>
+              <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>
                 <Route index element={<DashboardPage />} />
-                <Route path="inbox" element={<InboxPage />} />
-                <Route path="pages" element={<PagesPage />} />
-                <Route path="pages/:id" element={<PageDetailPage />} />
-                <Route path="reviews" element={<ReviewsPage />} />
-                <Route path="reviews/:id" element={<ReviewDetailPage />} />
-                <Route path="qa" element={<QAPage />} />
-                <Route path="collections" element={<CollectionsPage />} />
-                <Route path="collections/:id" element={<CollectionDetailPage />} />
-                <Route path="search" element={<SearchPage />} />
-                <Route path="activity" element={<ActivityPage />} />
-                <Route path="sources" element={<SourcesPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="settings/templates" element={<TemplatesPage />} />
+                <Route path="inbox" element={<RequireWorkspacePage><InboxPage /></RequireWorkspacePage>} />
+                <Route path="pages" element={<RequireWorkspacePage><PagesPage /></RequireWorkspacePage>} />
+                <Route path="pages/:id" element={<RequireWorkspacePage><PageDetailPage /></RequireWorkspacePage>} />
+                <Route path="reviews" element={<RequireWorkspacePage><ReviewsPage /></RequireWorkspacePage>} />
+                <Route path="reviews/:id" element={<RequireWorkspacePage><ReviewDetailPage /></RequireWorkspacePage>} />
+                <Route path="qa" element={<RequireWorkspacePage><QAPage /></RequireWorkspacePage>} />
+                <Route path="collections" element={<RequireWorkspacePage><CollectionsPage /></RequireWorkspacePage>} />
+                <Route path="collections/:id" element={<RequireWorkspacePage><CollectionDetailPage /></RequireWorkspacePage>} />
+                <Route path="search" element={<RequireWorkspacePage><SearchPage /></RequireWorkspacePage>} />
+                <Route path="activity" element={<RequireWorkspacePage><ActivityPage /></RequireWorkspacePage>} />
+                <Route path="sources" element={<RequireWorkspacePage><SourcesPage /></RequireWorkspacePage>} />
+                <Route path="settings" element={<RequireWorkspacePage><SettingsPage /></RequireWorkspacePage>} />
+                <Route path="settings/templates" element={<RequireWorkspacePage><TemplatesPage /></RequireWorkspacePage>} />
               </Route>
 
               {/* Catch-all */}
-              <Route path="*" element={<Navigate to="/inbox" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
         </WorkspaceProvider>
@@ -75,7 +74,7 @@ function GuestOnly({ children }: { children: React.ReactNode }): React.ReactElem
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) return <LoadingScreen />;
-  if (isAuthenticated) return <Navigate to="/inbox" replace />;
+  if (isAuthenticated) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -87,12 +86,10 @@ function RequireAuth({ children }: { children: React.ReactNode }): React.ReactEl
   return <>{children}</>;
 }
 
-function RequireWorkspace({ children }: { children: React.ReactNode }): React.ReactElement {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const { workspace, isLoading: wsLoading } = useWorkspace();
+function RequireWorkspacePage({ children }: { children: React.ReactNode }): React.ReactElement {
+  const { workspace, isLoading } = useWorkspace();
 
-  if (authLoading || wsLoading) return <LoadingScreen />;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (!workspace) return <Navigate to="/setup" replace />;
+  if (isLoading) return <LoadingScreen />;
+  if (!workspace) return <Navigate to="/" replace />;
   return <>{children}</>;
 }

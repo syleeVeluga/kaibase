@@ -1,7 +1,7 @@
 # Implementation Plan — Kaibase
 
 > Status: Draft  
-> Last Updated: 2026-04-11
+> Last Updated: 2026-04-13
 
 ---
 
@@ -43,24 +43,26 @@
 
 ### Sprint 0a.2 — Auth & Source Connectors (Week 3-4)
 
-**Goal:** Users can log in, create a workspace, and connect a local folder.
+**Goal:** Users can register, land on the dashboard with a ready workspace, and connect a local folder.
 
 | Task | PRD Reference | Details |
 |------|--------------|---------|
-| User registration (email/password) | [Auth](../prd/13-auth-rbac.md) | bcrypt, JWT |
+| User registration (email/password) | [Auth](../prd/13-auth-rbac.md) | bcrypt, JWT, bootstrap first workspace |
 | OAuth login (Google) | [Auth](../prd/13-auth-rbac.md) | OAuth 2.0 flow |
 | JWT auth middleware | [Auth](../prd/13-auth-rbac.md) | Access + refresh tokens |
-| Workspace CRUD (minimal) | [Auth](../prd/13-auth-rbac.md) | Create, basic settings |
+| Workspace CRUD (minimal) | [Auth](../prd/13-auth-rbac.md) | Auto-provision initial workspace, basic settings, additional workspace creation |
 | **Local folder connector** | [Source Vault](../prd/03-source-vault.md) | User configures folder path; system watches for files |
 | **File upload fallback** | [Source Vault](../prd/03-source-vault.md) | Drag-and-drop for ad-hoc files (up to 100MB) |
 | URL submission endpoint | [Source Vault](../prd/03-source-vault.md) | Fetch + store |
 | File parsing pipeline (PDF, DOCX, TXT, MD) | [Source Vault](../prd/03-source-vault.md) | Text extraction |
 | Content deduplication (SHA-256) | [Source Vault](../prd/03-source-vault.md) | Prevent duplicates |
 | Source connector management UI | [Frontend](../prd/14-frontend.md) | Add folder path, see sync status |
-| **Progressive onboarding flow** | [Frontend](../prd/14-frontend.md) | Connect → watch → explore (Step 1-2) |
+| **Progressive onboarding flow** | [Frontend](../prd/14-frontend.md) | Dashboard-first empty state → connect → watch → explore |
 
 **Implementation Status Snapshot (Apr 2026)**
 
+- Email/password registration now auto-provisions the user's first workspace, owner membership, and default policy pack in the same transaction, so first login no longer blocks on a separate workspace setup screen.
+- The web app now routes authenticated users directly to the dashboard. If a user somehow has no workspace, the dashboard provides the first-workspace creation empty state instead of a dedicated `/setup` page.
 - Markdown web upload now works end-to-end for the Phase 0 fallback path: `POST /sources/upload` stores the source, enqueues parse, extracts `content_text`, and advances the source to `processed` before downstream classification.
 - The workers runtime now uses one dispatcher worker per BullMQ queue (`ai-ingest`, `ai-page-compile`) so jobs are routed by `job.name` instead of being silently consumed by the wrong worker on a shared queue.
 - Focused regression coverage now exists for the markdown upload contract in the API route and for uploaded file materialization in the parse worker.

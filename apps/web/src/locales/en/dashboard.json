@@ -1,5 +1,13 @@
 {
   "title": "Dashboard",
+  "emptyState": {
+    "title": "Create your first workspace",
+    "description": "Start on the dashboard and create a workspace when you're ready. Once it exists, the rest of the knowledge system becomes available.",
+    "nameLabel": "Workspace name",
+    "placeholder": "e.g. My Team",
+    "createAction": "Create workspace",
+    "creating": "Creating..."
+  },
   "stats": {
     "totalPages": "Total Pages",
     "totalSources": "Total Sources",
