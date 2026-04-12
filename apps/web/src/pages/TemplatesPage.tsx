@@ -64,7 +64,7 @@ export function TemplatesPage(): React.ReactElement {
     },
   });
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent): void => {
     e.preventDefault();
     if (!name.trim()) return;
     createMutation.mutate({

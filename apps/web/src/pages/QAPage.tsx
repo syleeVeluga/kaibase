@@ -60,7 +60,7 @@ export function QAPage(): React.ReactElement {
     answerEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history]);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent): void => {
     e.preventDefault();
     const trimmed = question.trim();
     if (!trimmed || askMutation.isPending) return;
@@ -69,7 +69,7 @@ export function QAPage(): React.ReactElement {
 
   if (!wid) return <div className={shared.loading}>Select a workspace</div>;
 
-  const confidenceColor = (c: number) =>
+  const confidenceColor = (c: number): string =>
     c >= 0.7 ? '#16a34a' : c >= 0.4 ? '#d97706' : '#dc2626';
 
   return (

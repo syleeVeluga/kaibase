@@ -61,7 +61,7 @@ export function ActivityPage(): React.ReactElement {
   const events = query.data?.events ?? [];
   const nextCursor = query.data?.nextCursor;
 
-  const formatTime = (iso: string) => {
+  const formatTime = (iso: string): string => {
     const d = new Date(iso);
     return d.toLocaleString();
   };

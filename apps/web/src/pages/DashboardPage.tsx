@@ -42,7 +42,7 @@ export function DashboardPage(): React.ReactElement {
   const stats = statsQuery.data;
   const health = healthQuery.data;
 
-  const coverageColor = (pct: number) =>
+  const coverageColor = (pct: number): string =>
     pct >= 80 ? '#16a34a' : pct >= 50 ? '#d97706' : '#dc2626';
 
   return (

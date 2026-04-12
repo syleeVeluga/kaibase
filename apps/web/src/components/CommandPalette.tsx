@@ -20,7 +20,7 @@ export function CommandPalette(): React.ReactElement | null {
 
   // Listen for Cmd+K / Ctrl+K
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
+    const handler = (e: KeyboardEvent): void => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setOpen((prev) => !prev);
@@ -72,13 +72,13 @@ export function CommandPalette(): React.ReactElement | null {
     [wid],
   );
 
-  const handleInputChange = (value: string) => {
+  const handleInputChange = (value: string): void => {
     setQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => doSearch(value), 300);
   };
 
-  const handleSelect = (pageId: string) => {
+  const handleSelect = (pageId: string): void => {
     setOpen(false);
     navigate(`/pages/${pageId}`);
   };

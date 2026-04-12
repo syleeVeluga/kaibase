@@ -15,7 +15,7 @@ export async function findOne<T extends TableWithTenant>(
   table: T,
   id: string,
   workspaceId: string,
-) {
+): Promise<Record<string, unknown>> {
   const rows = await db
     .select()
     .from(table as PgTable)
@@ -38,7 +38,7 @@ export async function updateOne<T extends TableWithTenant>(
   id: string,
   workspaceId: string,
   values: Record<string, unknown>,
-) {
+): Promise<Record<string, unknown>> {
   const updated = await db
     .update(table as PgTable)
     .set({ ...values, updatedAt: new Date() } as never)
