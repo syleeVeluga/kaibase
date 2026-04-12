@@ -5,7 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { apiClient } from './api-client.js';
+import { apiClient, ApiError } from './api-client.js';
 import { useAuth } from './auth-context.js';
 
 interface Workspace {
@@ -60,7 +60,14 @@ export function WorkspaceProvider({
         const match = ws.find((w) => w.id === savedId);
         setWorkspace(match ?? ws[0] ?? null);
       })
-      .catch(() => {})
+      .catch((err: unknown) => {
+        // If the API returned 401, tokens are invalid — clear them so the
+        // auth guard redirects to /login instead of /setup.
+        if (err instanceof ApiError && err.status === 401) {
+          apiClient.clearTokens();
+          window.location.replace('/login');
+        }
+      })
       .finally(() => setIsLoading(false));
   }, [isAuthenticated]);
 
