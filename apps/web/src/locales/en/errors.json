@@ -9,5 +9,6 @@
   "policyNotFound": "No active policy pack found",
   "policyVersionNotFound": "Policy version not found",
   "policyEvaluationFailed": "Policy evaluation failed",
-  "invalidInput": "Invalid input"
+  "invalidInput": "Invalid input",
+  "slugTaken": "A workspace with this slug already exists"
 }
