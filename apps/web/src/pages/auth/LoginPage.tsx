@@ -6,10 +6,12 @@ import { useAuth } from '../../lib/auth-context.js';
 import { ApiError } from '../../lib/api-client.js';
 import * as styles from './AuthPage.css.js';
 
+const isDev = import.meta.env.DEV;
+
 export function LoginPage(): React.ReactElement {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, devLogin } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,11 +40,40 @@ export function LoginPage(): React.ReactElement {
     }
   }
 
+  async function handleDevLogin(): Promise<void> {
+    setError('');
+    setLoading(true);
+    try {
+      await devLogin();
+      navigate('/inbox', { replace: true });
+    } catch {
+      setError(t('internal', { ns: 'errors' }));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.card}>
         <h1 className={styles.title}>{t('app.name')}</h1>
         <p className={styles.subtitle}>{t('auth.signInTitle')}</p>
+
+        {isDev && (
+          <>
+            <button
+              className={styles.devButton}
+              type="button"
+              onClick={handleDevLogin}
+              disabled={loading}
+            >
+              {loading ? t('auth.signingIn') : t('auth.devLogin')}
+            </button>
+            <div className={styles.divider}>
+              <span className={styles.dividerText}>{t('auth.or')}</span>
+            </div>
+          </>
+        )}
 
         <form className={styles.form} onSubmit={handleSubmit}>
           {error && <div className={styles.errorMessage}>{error}</div>}

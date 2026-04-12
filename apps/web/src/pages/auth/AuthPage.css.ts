@@ -91,6 +91,52 @@ export const errorMessage = style({
   borderRadius: vars.radius.sm,
 });
 
+export const devButton = style({
+  width: '100%',
+  padding: `${vars.space.sm} ${vars.space.md}`,
+  backgroundColor: '#16a34a',
+  color: '#ffffff',
+  border: '2px dashed #15803d',
+  borderRadius: vars.radius.md,
+  fontSize: vars.fontSize.md,
+  fontWeight: 600,
+  cursor: 'pointer',
+  transition: 'background-color 0.15s',
+  ':hover': {
+    backgroundColor: '#15803d',
+  },
+  ':disabled': {
+    opacity: 0.6,
+    cursor: 'not-allowed',
+  },
+});
+
+export const divider = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space.md,
+  margin: `${vars.space.md} 0`,
+  '::before': {
+    content: '""',
+    flex: 1,
+    height: '1px',
+    backgroundColor: vars.color.border,
+  },
+  '::after': {
+    content: '""',
+    flex: 1,
+    height: '1px',
+    backgroundColor: vars.color.border,
+  },
+});
+
+export const dividerText = style({
+  fontSize: vars.fontSize.xs,
+  color: vars.color.textSecondary,
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
+});
+
 export const switchLink = style({
   textAlign: 'center',
   fontSize: vars.fontSize.sm,

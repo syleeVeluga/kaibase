@@ -10,9 +10,10 @@ import {
 } from '../middleware/auth.js';
 import { AppError } from '../middleware/error-handler.js';
 import { db } from '@kaibase/db/client';
-import { users } from '@kaibase/db/schema';
+import { users, workspaces, workspaceMembers, policyPacks } from '@kaibase/db/schema';
 import { eq } from 'drizzle-orm';
 import { generateId } from '@kaibase/shared';
+import { getDefaultPolicyPack } from '@kaibase/policy';
 import type { AppEnv } from '../types.js';
 
 export const authRoutes = new Hono<AppEnv>();
@@ -148,4 +149,67 @@ authRoutes.post('/logout', authMiddleware(), async (c) => {
   // Stateless JWT — client discards tokens. Server-side token revocation
   // can be added later with a Redis blocklist if needed.
   return c.json({ success: true });
+});
+
+// Dev-only: one-click login without credentials
+authRoutes.post('/dev-login', async (c) => {
+  if (process.env['NODE_ENV'] === 'production') {
+    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
+  }
+
+  const DEV_EMAIL = 'dev@kaibase.local';
+  const DEV_NAME = 'Dev User';
+
+  // Upsert dev user
+  const existing = await db.select().from(users).where(eq(users.email, DEV_EMAIL)).limit(1);
+  let devUser: { id: string; email: string; name: string };
+
+  if (existing[0]) {
+    devUser = { id: existing[0].id, email: existing[0].email, name: existing[0].name };
+  } else {
+    const id = generateId();
+    const passwordHash = await bcrypt.hash('dev-password', 4); // fast hash for dev
+    await db.insert(users).values({ id, email: DEV_EMAIL, name: DEV_NAME, passwordHash });
+    devUser = { id, email: DEV_EMAIL, name: DEV_NAME };
+  }
+
+  // Auto-create workspace if user has none
+  const memberRows = await db
+    .select({ workspaceId: workspaceMembers.workspaceId })
+    .from(workspaceMembers)
+    .where(eq(workspaceMembers.userId, devUser.id))
+    .limit(1);
+
+  if (memberRows.length === 0) {
+    const wsId = generateId();
+    await db.transaction(async (tx) => {
+      await tx.insert(workspaces).values({
+        id: wsId,
+        name: 'Dev Workspace',
+        slug: 'dev-workspace',
+      });
+      await tx.insert(workspaceMembers).values({
+        workspaceId: wsId,
+        userId: devUser.id,
+        role: 'owner',
+      });
+      const packId = generateId();
+      const defaultPack = getDefaultPolicyPack(wsId, packId);
+      await tx.insert(policyPacks).values({
+        id: packId,
+        workspaceId: wsId,
+        name: defaultPack.name,
+        version: defaultPack.version,
+        isActive: true,
+        rules: defaultPack.rules,
+        defaultOutcome: defaultPack.defaultOutcome,
+        createdBy: devUser.id,
+      });
+    });
+  }
+
+  const accessToken = await signAccessToken({ sub: devUser.id, email: devUser.email });
+  const refreshToken = await signRefreshToken({ sub: devUser.id, email: devUser.email });
+
+  return c.json({ accessToken, refreshToken, user: devUser });
 });

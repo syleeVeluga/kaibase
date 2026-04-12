@@ -23,6 +23,7 @@ interface AuthState {
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
+  devLogin: () => Promise<void>;
   logout: () => void;
 }
 
@@ -82,6 +83,17 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
     [],
   );
 
+  const devLogin = useCallback(async () => {
+    const data = await apiClient.post<{
+      accessToken: string;
+      refreshToken: string;
+      user: User;
+    }>('/auth/dev-login');
+
+    apiClient.setTokens(data.accessToken, data.refreshToken);
+    setState({ user: data.user, isLoading: false, isAuthenticated: true });
+  }, []);
+
   const logout = useCallback(() => {
     apiClient.post('/auth/logout').catch(() => {});
     apiClient.clearTokens();
@@ -89,7 +101,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
   }, []);
 
   return (
-    <AuthContext value={{ ...state, login, register, logout }}>
+    <AuthContext value={{ ...state, login, register, devLogin, logout }}>
       {children}
     </AuthContext>
   );
