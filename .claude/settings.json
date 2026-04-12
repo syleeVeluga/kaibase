@@ -76,18 +76,6 @@
           }
         ]
       }
-    ],
-    "PreCommit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo '🔍 Pre-commit: Ensure yarn typecheck and yarn lint pass before committing'",
-            "description": "Pre-commit quality reminder"
-          }
-        ]
-      }
     ]
   }
 }

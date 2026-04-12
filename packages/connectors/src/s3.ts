@@ -31,22 +31,25 @@
 import type { BaseConnector, ConnectorConfig, ConnectorEvent } from './base.js';
 
 export class S3Connector implements BaseConnector {
-  // Constructor is kept so callers can instantiate consistently.
-  constructor(_config: ConnectorConfig) {}
+  private readonly config: ConnectorConfig;
+
+  constructor(config: ConnectorConfig) {
+    this.config = config;
+  }
 
   start(): Promise<void> {
-    throw new Error('S3 connector is not yet implemented (Phase 1)');
+    throw new Error(`S3 connector (${this.config.id}) is not yet implemented (Phase 1)`);
   }
 
   stop(): Promise<void> {
-    throw new Error('S3 connector is not yet implemented (Phase 1)');
+    throw new Error(`S3 connector (${this.config.id}) is not yet implemented (Phase 1)`);
   }
 
   onEvent(_handler: (event: ConnectorEvent) => void): void {
-    throw new Error('S3 connector is not yet implemented (Phase 1)');
+    throw new Error(`S3 connector (${this.config.id}) is not yet implemented (Phase 1)`);
   }
 
   scan(): Promise<ConnectorEvent[]> {
-    throw new Error('S3 connector is not yet implemented (Phase 1)');
+    throw new Error(`S3 connector (${this.config.id}) is not yet implemented (Phase 1)`);
   }
 }

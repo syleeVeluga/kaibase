@@ -23,5 +23,12 @@
     "db:seed": "yarn workspace @kaibase/db seed",
     "docker:up": "docker compose -f docker/docker-compose.yml up -d",
     "docker:down": "docker compose -f docker/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "typescript": "^6.0.2",
+    "typescript-eslint": "^8.58.1"
   }
 }

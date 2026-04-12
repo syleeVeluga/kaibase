@@ -1,29 +1,73 @@
 import { Worker } from 'bullmq';
-import { QUEUE_NAMES, connection } from '../queues.js';
+import { eq, and } from 'drizzle-orm';
+import { QUEUE_NAMES, queues, connection } from '../queues.js';
+import { parseFile } from '@kaibase/connectors';
+import { db } from '@kaibase/db/client';
+import { sources } from '@kaibase/db/schema';
+import { sha256 } from '@kaibase/shared';
 import pino from 'pino';
 
 const logger = pino({ name: 'parse-worker' });
+
+interface ParseJobData {
+  sourceId: string;
+  filePath: string;
+  mimeType: string;
+  workspaceId: string;
+}
 
 export const parseWorker = new Worker(
   QUEUE_NAMES.AI_INGEST,
   async (job) => {
     if (job.name !== 'parse') return;
 
-    const { sourceId, filePath, mimeType: _mimeType, workspaceId } = job.data as {
-      sourceId: string;
-      filePath: string;
-      mimeType: string;
-      workspaceId: string;
-    };
-    logger.info({ sourceId, filePath, workspaceId }, 'Parsing file');
+    const { sourceId, filePath, mimeType, workspaceId } = job.data as ParseJobData;
+    logger.info({ sourceId, filePath, mimeType, workspaceId }, 'Parsing file');
 
-    // TODO: Use @kaibase/connectors parsers to extract text
-    // 1. Parse file using parseFile(filePath, mimeType)
-    // 2. Update source.content_text in DB
-    // 3. Update source.status to 'processed'
-    // 4. Add classify job to queue
+    const whereClause = and(
+      eq(sources.id, sourceId),
+      eq(sources.workspaceId, workspaceId),
+    );
 
-    return { sourceId, parsed: true };
+    try {
+      // 1. Parse the file to extract plain text
+      const contentText = await parseFile(filePath, mimeType);
+
+      // 2. Compute content hash for deduplication
+      const contentHash = sha256(contentText);
+
+      // 3. Update source record: content_text, content_hash, status = 'processed'
+      const [updated] = await db
+        .update(sources)
+        .set({
+          contentText,
+          contentHash,
+          status: 'processed',
+        })
+        .where(whereClause)
+        .returning({ id: sources.id });
+
+      if (!updated) {
+        logger.warn({ sourceId, workspaceId }, 'Source not found — skipping');
+        return { sourceId, parsed: false };
+      }
+
+      // 4. Enqueue classify job for the next pipeline stage
+      await queues.aiIngest.add('classify', { sourceId, workspaceId });
+
+      logger.info({ sourceId, workspaceId, contentHash }, 'Parse complete — classify job enqueued');
+      return { sourceId, parsed: true };
+    } catch (error) {
+      // On any parse failure, mark the source as failed
+      logger.error({ sourceId, workspaceId, err: error }, 'Parse failed');
+
+      await db
+        .update(sources)
+        .set({ status: 'failed' })
+        .where(whereClause);
+
+      throw error;
+    }
   },
   {
     connection,

@@ -118,11 +118,14 @@ export class LocalFolderConnector implements BaseConnector {
     });
 
     // Wait for the initial scan to complete so the watcher is ready.
-    await new Promise<void>((resolveReady) => {
-      this.watcher!.on('ready', () => {
-        resolveReady();
+    const w = this.watcher;
+    if (w) {
+      await new Promise<void>((resolveReady) => {
+        w.on('ready', () => {
+          resolveReady();
+        });
       });
-    });
+    }
   }
 
   async stop(): Promise<void> {

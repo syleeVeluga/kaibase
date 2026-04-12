@@ -209,7 +209,6 @@ async function importPdfParse(): Promise<
 > {
   const { createRequire } = await import('node:module');
   const require = createRequire(import.meta.url);
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require('pdf-parse') as (
     buffer: Buffer,
   ) => Promise<{ text: string; numpages: number; info: unknown }>;
@@ -221,7 +220,6 @@ async function importMammoth(): Promise<{
 }> {
   const { createRequire } = await import('node:module');
   const require = createRequire(import.meta.url);
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   return require('mammoth') as {
     extractRawText(options: { path: string }): Promise<{ value: string; messages: unknown[] }>;
   };
