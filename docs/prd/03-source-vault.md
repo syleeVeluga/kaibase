@@ -73,6 +73,8 @@ When a connector detects a file change:
 - **URL submission** — user pastes a URL; system fetches and stores content
 - **Text input** — direct text entry via web app
 
+> Implementation note (Apr 2026): the verified fallback ingest path is currently markdown web upload plus direct text input. The markdown upload path is validated end-to-end through parse and source status progression. Broader file-type coverage and object-storage-backed direct upload handling remain follow-up work.
+
 ### Phase 1
 - **Cloud storage connectors** — Google Drive, S3/GCS (see connector table above)
 - **Email inbound** — dedicated workspace email address; system parses and stores

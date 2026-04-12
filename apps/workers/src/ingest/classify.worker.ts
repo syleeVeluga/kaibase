@@ -1,4 +1,4 @@
-import { Worker } from 'bullmq';
+import type { Job } from 'bullmq';
 import { eq, and } from 'drizzle-orm';
 import { db } from '@kaibase/db';
 import { sources, activityEvents } from '@kaibase/db';
@@ -8,7 +8,7 @@ import {
   CLASSIFY_PROMPT_VERSION,
 } from '@kaibase/ai';
 import type { ClassifySourceInput, ClassifySourceResult } from '@kaibase/ai';
-import { QUEUE_NAMES, queues, connection } from '../queues.js';
+import { queues } from '../queues.js';
 import pino from 'pino';
 
 const logger = pino({ name: 'classify-worker' });
@@ -33,12 +33,7 @@ function getLLM(): OpenAIProvider {
   return llmInstance;
 }
 
-export const classifyWorker = new Worker(
-  QUEUE_NAMES.AI_INGEST,
-  async (job) => {
-    // Multiple workers share the ai-ingest queue; filter to classify jobs only
-    if (job.name !== 'classify') return;
-
+export async function processClassifyJob(job: Job): Promise<{ sourceId: string; classified: boolean; classification?: ClassifySourceResult; reason?: string }> {
     const { sourceId, workspaceId } = job.data as {
       sourceId: string;
       workspaceId: string;
@@ -162,9 +157,4 @@ export const classifyWorker = new Worker(
       classified: true,
       classification,
     };
-  },
-  {
-    connection,
-    concurrency: 5,
-  },
-);
+}

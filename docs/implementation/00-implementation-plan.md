@@ -59,6 +59,13 @@
 | Source connector management UI | [Frontend](../prd/14-frontend.md) | Add folder path, see sync status |
 | **Progressive onboarding flow** | [Frontend](../prd/14-frontend.md) | Connect → watch → explore (Step 1-2) |
 
+**Implementation Status Snapshot (Apr 2026)**
+
+- Markdown web upload now works end-to-end for the Phase 0 fallback path: `POST /sources/upload` stores the source, enqueues parse, extracts `content_text`, and advances the source to `processed` before downstream classification.
+- The workers runtime now uses one dispatcher worker per BullMQ queue (`ai-ingest`, `ai-page-compile`) so jobs are routed by `job.name` instead of being silently consumed by the wrong worker on a shared queue.
+- Focused regression coverage now exists for the markdown upload contract in the API route and for uploaded file materialization in the parse worker.
+- Still pending for broader Source Vault completeness: object-storage-backed direct uploads, URL fetch reliability, attachment/download endpoints, source version APIs, and automated connector change detection.
+
 ### Sprint 0a.3 — AI Compiler & Policy (Week 4-5)
 
 **Goal:** AI creates pages from connected sources. Policy engine governs with sensible defaults.

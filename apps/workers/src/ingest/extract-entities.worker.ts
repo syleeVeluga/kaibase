@@ -1,6 +1,6 @@
-import { Worker } from 'bullmq';
+import type { Job } from 'bullmq';
 import { eq, and, desc, sql } from 'drizzle-orm';
-import { QUEUE_NAMES, queues, connection } from '../queues.js';
+import { queues } from '../queues.js';
 import { db } from '@kaibase/db';
 import { sources, entities, concepts, activityEvents } from '@kaibase/db';
 import {
@@ -112,11 +112,7 @@ async function upsertConcept(
   return row.id;
 }
 
-export const extractEntitiesWorker = new Worker(
-  QUEUE_NAMES.AI_INGEST,
-  async (job) => {
-    if (job.name !== 'extract-entities') return;
-
+export async function processExtractEntitiesJob(job: Job): Promise<{ sourceId: string; extracted: boolean; entityCount?: number; conceptCount?: number; reason?: string }> {
     const { sourceId, workspaceId, classification } = job.data as {
       sourceId: string;
       workspaceId: string;
@@ -291,9 +287,4 @@ export const extractEntitiesWorker = new Worker(
       entityCount: entityIds.length,
       conceptCount: conceptIds.length,
     };
-  },
-  {
-    connection,
-    concurrency: 3,
-  },
-);
+}

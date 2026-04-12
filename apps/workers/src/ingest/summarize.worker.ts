@@ -1,6 +1,5 @@
-import { Worker } from 'bullmq';
+import type { Job } from 'bullmq';
 import { eq, and } from 'drizzle-orm';
-import { QUEUE_NAMES, connection } from '../queues.js';
 import { db } from '@kaibase/db';
 import { sources, activityEvents } from '@kaibase/db';
 import {
@@ -29,11 +28,7 @@ function getLLM(): OpenAIProvider {
 /** Maximum character length of source text sent to the LLM. */
 const MAX_SOURCE_CHARS = 100_000;
 
-export const summarizeWorker = new Worker(
-  QUEUE_NAMES.AI_INGEST,
-  async (job) => {
-    if (job.name !== 'summarize') return;
-
+export async function processSummarizeJob(job: Job): Promise<{ sourceId: string; summarized: boolean; language?: string; keyPointsCount?: number; reason?: string }> {
     const { sourceId, workspaceId } = job.data as {
       sourceId: string;
       workspaceId: string;
@@ -186,9 +181,4 @@ export const summarizeWorker = new Worker(
       language: result.language,
       keyPointsCount: result.keyPoints.length,
     };
-  },
-  {
-    connection,
-    concurrency: 3,
-  },
-);
+}

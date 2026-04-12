@@ -1,10 +1,6 @@
 import pino from 'pino';
-import { classifyWorker } from './ingest/classify.worker.js';
-import { summarizeWorker } from './ingest/summarize.worker.js';
-import { extractEntitiesWorker } from './ingest/extract-entities.worker.js';
-import { parseWorker } from './ingest/parse.worker.js';
-import { pageCreateWorker } from './compile/page-create.worker.js';
-import { embeddingWorker } from './compile/embedding.worker.js';
+import { ingestWorker } from './ingest/ingest-queue.worker.js';
+import { compileWorker } from './compile/compile-queue.worker.js';
 
 const logger = pino({
   level: process.env['LOG_LEVEL'] ?? 'info',
@@ -15,12 +11,8 @@ const logger = pino({
 });
 
 const workers = [
-  classifyWorker,
-  summarizeWorker,
-  extractEntitiesWorker,
-  parseWorker,
-  pageCreateWorker,
-  embeddingWorker,
+  ingestWorker,
+  compileWorker,
 ];
 
 logger.info(`Started ${workers.length} workers`);

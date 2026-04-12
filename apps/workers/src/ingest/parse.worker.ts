@@ -1,28 +1,27 @@
-import { Worker } from 'bullmq';
+import type { Job } from 'bullmq';
 import { eq, and } from 'drizzle-orm';
-import { QUEUE_NAMES, queues, connection } from '../queues.js';
+import { queues } from '../queues.js';
 import { parseFile } from '@kaibase/connectors';
 import { db } from '@kaibase/db/client';
 import { sources } from '@kaibase/db/schema';
 import { sha256 } from '@kaibase/shared';
 import pino from 'pino';
+import { resolveParseJobFile } from './parse-job-file.js';
 
 const logger = pino({ name: 'parse-worker' });
 
 interface ParseJobData {
   sourceId: string;
-  filePath: string;
+  filePath?: string;
+  rawFileContent?: string;
+  filename?: string;
   mimeType: string;
   workspaceId: string;
 }
 
-export const parseWorker = new Worker(
-  QUEUE_NAMES.AI_INGEST,
-  async (job) => {
-    if (job.name !== 'parse') return;
-
-    const { sourceId, filePath, mimeType, workspaceId } = job.data as ParseJobData;
-    logger.info({ sourceId, filePath, mimeType, workspaceId }, 'Parsing file');
+export async function processParseJob(job: Job): Promise<{ sourceId: string; parsed: boolean } | { sourceId: string; parsed: false; reason: string }> {
+    const { sourceId, filePath, rawFileContent, filename, mimeType, workspaceId } = job.data as ParseJobData;
+    logger.info({ sourceId, filePath, filename, mimeType, workspaceId }, 'Parsing file');
 
     const whereClause = and(
       eq(sources.id, sourceId),
@@ -30,8 +29,20 @@ export const parseWorker = new Worker(
     );
 
     try {
-      // 1. Parse the file to extract plain text
-      const contentText = await parseFile(filePath, mimeType);
+      const parseJobFile = await resolveParseJobFile({
+        sourceId,
+        filePath,
+        rawFileContent,
+        filename,
+      });
+
+      let contentText: string;
+      try {
+        // 1. Parse the file to extract plain text
+        contentText = await parseFile(parseJobFile.filePath, mimeType);
+      } finally {
+        await parseJobFile.cleanup();
+      }
 
       // 2. Compute content hash for deduplication
       const contentHash = await sha256(contentText);
@@ -68,9 +79,4 @@ export const parseWorker = new Worker(
 
       throw error;
     }
-  },
-  {
-    connection,
-    concurrency: 3,
-  },
-);
+}

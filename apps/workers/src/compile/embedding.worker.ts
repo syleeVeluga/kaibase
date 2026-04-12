@@ -1,9 +1,8 @@
-import { Worker } from 'bullmq';
+import type { Job } from 'bullmq';
 import { eq, and } from 'drizzle-orm';
 import { db } from '@kaibase/db';
 import { canonicalPages, pageEmbeddings } from '@kaibase/db';
 import { EmbeddingProvider } from '@kaibase/ai';
-import { QUEUE_NAMES, connection } from '../queues.js';
 import pino from 'pino';
 
 const logger = pino({ name: 'embedding-worker' });
@@ -129,11 +128,7 @@ function getEmbedder(): EmbeddingProvider {
 // Worker
 // ---------------------------------------------------------------------------
 
-export const embeddingWorker = new Worker(
-  QUEUE_NAMES.AI_PAGE_COMPILE,
-  async (job) => {
-    if (job.name !== 'embedding') return;
-
+export async function processEmbeddingJob(job: Job): Promise<{ pageId: string; embedded: boolean; chunkCount?: number; reason?: string }> {
     const { pageId, workspaceId } = job.data as { pageId: string; workspaceId: string };
     logger.info({ pageId, workspaceId }, 'Generating embeddings');
 
@@ -190,9 +185,4 @@ export const embeddingWorker = new Worker(
     logger.info({ pageId, chunkCount: chunks.length }, 'Embeddings stored successfully');
 
     return { pageId, embedded: true, chunkCount: chunks.length };
-  },
-  {
-    connection,
-    concurrency: 3,
-  },
-);
+}

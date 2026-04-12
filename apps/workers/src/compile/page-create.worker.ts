@@ -1,4 +1,4 @@
-import { Worker } from 'bullmq';
+import type { Job } from 'bullmq';
 import { eq, and, inArray } from 'drizzle-orm';
 import { db } from '@kaibase/db';
 import {
@@ -27,7 +27,7 @@ import type {
 import { PolicyEngine } from '@kaibase/policy';
 import type { PolicyPack, PolicyEvaluationResult } from '@kaibase/shared';
 import { generateId, detectLanguage } from '@kaibase/shared';
-import { QUEUE_NAMES, queues, connection } from '../queues.js';
+import { queues } from '../queues.js';
 import pino from 'pino';
 
 const logger = pino({ name: 'page-create-worker' });
@@ -102,13 +102,7 @@ function collectCitedSourceIds(blocks: CreatePageResult['blocks']): Set<string> 
 // Worker
 // ---------------------------------------------------------------------------
 
-export const pageCreateWorker = new Worker(
-  QUEUE_NAMES.AI_PAGE_COMPILE,
-  async (job) => {
-    // The ai-page-compile queue is shared with the embedding worker.
-    // Only process page-create jobs here.
-    if (job.name === 'embedding') return;
-
+export async function processPageCreateJob(job: Job): Promise<Record<string, unknown>> {
     const { sourceIds, workspaceId, pageType, extractedEntityIds, extractedConceptIds } = job.data as {
       sourceIds: string[];
       workspaceId: string;
@@ -444,9 +438,4 @@ export const pageCreateWorker = new Worker(
       status: pageStatus,
       policyOutcome: policyResult.outcome,
     };
-  },
-  {
-    connection,
-    concurrency: 2,
-  },
-);
+}

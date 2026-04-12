@@ -143,6 +143,7 @@ sourceRoutes.post('/upload', async (c) => {
     workspaceId,
     filename: file.name,
     mimeType: file.type,
+    rawFileContent: buffer.toString('base64'),
   });
 
   logger.info({ sourceId, filename: file.name }, 'File upload enqueued for parsing');
