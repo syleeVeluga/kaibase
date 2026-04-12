@@ -1,12 +1,11 @@
-import { eq, and } from 'drizzle-orm';
-import type { PgColumn } from 'drizzle-orm/pg-core';
+import { eq, and, type Column } from 'drizzle-orm';
+import type { PgTable } from 'drizzle-orm/pg-core';
 import { db } from '@kaibase/db/client';
 import { AppError } from './middleware/error-handler.js';
 
-type TableWithTenant = {
-  id: PgColumn<any, any, any>;
-  workspaceId: PgColumn<any, any, any>;
-  [key: string]: any;
+type TableWithTenant = PgTable & {
+  id: Column;
+  workspaceId: Column;
 };
 
 /**
@@ -19,7 +18,7 @@ export async function findOne<T extends TableWithTenant>(
 ) {
   const rows = await db
     .select()
-    .from(table as any)
+    .from(table as PgTable)
     .where(and(eq(table.id, id), eq(table.workspaceId, workspaceId)))
     .limit(1);
 
@@ -41,8 +40,8 @@ export async function updateOne<T extends TableWithTenant>(
   values: Record<string, unknown>,
 ) {
   const updated = await db
-    .update(table as any)
-    .set({ ...values, updatedAt: new Date() } as any)
+    .update(table as PgTable)
+    .set({ ...values, updatedAt: new Date() } as never)
     .where(and(eq(table.id, id), eq(table.workspaceId, workspaceId)))
     .returning();
 
