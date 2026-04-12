@@ -22,11 +22,12 @@ export async function findOne<T extends TableWithTenant>(
     .where(and(eq(table.id, id), eq(table.workspaceId, workspaceId)))
     .limit(1);
 
-  if (rows.length === 0) {
+  const row = rows[0];
+  if (!row) {
     throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
   }
 
-  return rows[0];
+  return row;
 }
 
 /**
@@ -45,9 +46,10 @@ export async function updateOne<T extends TableWithTenant>(
     .where(and(eq(table.id, id), eq(table.workspaceId, workspaceId)))
     .returning();
 
-  if (updated.length === 0) {
+  const row = updated[0];
+  if (!row) {
     throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
   }
 
-  return updated[0];
+  return row;
 }
