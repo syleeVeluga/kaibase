@@ -3,9 +3,14 @@
     "name": "Kaibase"
   },
   "nav": {
+    "dashboard": "대시보드",
     "inbox": "수신함",
     "pages": "페이지",
     "reviews": "리뷰",
+    "collections": "컬렉션",
+    "qa": "Q&A",
+    "search": "검색",
+    "activity": "활동",
     "sources": "소스",
     "settings": "설정"
   },

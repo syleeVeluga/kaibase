@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
 import { apiClient } from '../lib/api-client.js';
@@ -9,15 +10,24 @@ import * as shared from '../theme/shared.css.js';
 import * as sourceStyles from './sources/SourcesPage.css.js';
 
 export function SettingsPage(): React.ReactElement {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['common', 'settings']);
 
   return (
     <div>
       <div className={shared.pageHeader}>
-        <h1 className={shared.pageTitle}>{t('nav.settings')}</h1>
+        <h1 className={shared.pageTitle}>{t('common:nav.settings')}</h1>
       </div>
 
       <WorkspaceSettings />
+      <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '24px 0' }} />
+      <section>
+        <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '12px' }}>
+          {t('settings:templates.title')}
+        </h2>
+        <Link to="/settings/templates" className={shared.primaryButton}>
+          {t('settings:templates.title')}
+        </Link>
+      </section>
       <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '24px 0' }} />
       <AccountSettings />
     </div>

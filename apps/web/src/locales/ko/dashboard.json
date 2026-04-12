@@ -1,0 +1,18 @@
+{
+  "title": "대시보드",
+  "stats": {
+    "totalPages": "전체 페이지",
+    "totalSources": "전체 소스",
+    "published": "게시됨",
+    "drafts": "초안",
+    "recentActivity": "활동 (7일)",
+    "collections": "컬렉션"
+  },
+  "health": {
+    "title": "지식 건강",
+    "embeddingCoverage": "임베딩 커버리지",
+    "stalePages": "오래된 페이지",
+    "pendingReviews": "대기 중인 리뷰",
+    "publishedPages": "게시된 페이지"
+  }
+}

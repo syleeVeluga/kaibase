@@ -1,0 +1,24 @@
+{
+  "title": "Collections",
+  "empty": "No collections yet.",
+  "create": "Create Collection",
+  "type": {
+    "inbox": "Inbox",
+    "project": "Projects",
+    "entities": "Entities",
+    "concepts": "Concepts",
+    "briefs": "Briefs",
+    "review_queue": "Review Queue",
+    "knowledge_index": "Knowledge Index",
+    "activity_log": "Activity Log",
+    "custom": "Custom"
+  },
+  "detail": {
+    "title": "Title",
+    "type": "Type",
+    "status": "Status",
+    "updated": "Updated",
+    "pages": "Pages",
+    "empty": "No pages in this collection."
+  }
+}

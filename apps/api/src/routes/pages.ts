@@ -16,6 +16,12 @@ pageRoutes.use('*', workspaceMiddleware());
 
 pageRoutes.get('/', async (c) => {
   const workspaceId = c.get('workspaceId');
+  const collectionId = c.req.query('collectionId');
+
+  const conditions = [eq(canonicalPages.workspaceId, workspaceId)];
+  if (collectionId) {
+    conditions.push(eq(canonicalPages.collectionId, collectionId));
+  }
 
   const result = await db
     .select({
@@ -34,7 +40,7 @@ pageRoutes.get('/', async (c) => {
       publishedAt: canonicalPages.publishedAt,
     })
     .from(canonicalPages)
-    .where(eq(canonicalPages.workspaceId, workspaceId))
+    .where(and(...conditions))
     .orderBy(desc(canonicalPages.updatedAt))
     .limit(100);
 

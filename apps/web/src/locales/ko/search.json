@@ -1,0 +1,8 @@
+{
+  "title": "검색",
+  "placeholder": "페이지, 소스 및 엔티티 검색...",
+  "noResults": "결과가 없습니다. 다른 검색어를 시도해 보세요.",
+  "resultCount": "{{count}}개의 결과",
+  "searching": "검색 중...",
+  "hint": "검색어를 입력하세요... (Esc로 닫기)"
+}

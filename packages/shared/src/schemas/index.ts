@@ -42,4 +42,33 @@ export {
   type EvaluatePolicyInput,
 } from './policy.schema.js';
 
-export { askQuestionSchema, type AskQuestionInput } from './qa.schema.js';
+export {
+  askQuestionSchema,
+  promoteAnswerSchema,
+  type AskQuestionInput,
+  type PromoteAnswerInput,
+} from './qa.schema.js';
+
+export {
+  createCollectionSchema,
+  updateCollectionSchema,
+  type CreateCollectionInput,
+  type UpdateCollectionInput,
+} from './collection.schema.js';
+
+export { searchQuerySchema, type SearchQueryInput } from './search.schema.js';
+
+export {
+  activityEventTypeSchema,
+  actorTypeSchema,
+  activityFilterSchema,
+  type ActivityFilterInput,
+} from './activity.schema.js';
+
+export {
+  templateSectionSchema,
+  createTemplateSchema,
+  updateTemplateSchema,
+  type CreateTemplateInput,
+  type UpdateTemplateInput,
+} from './template.schema.js';

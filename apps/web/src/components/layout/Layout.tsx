@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router';
 import { Sidebar } from './Sidebar.js';
+import { CommandPalette } from '../CommandPalette.js';
 import * as styles from './Layout.css.js';
 
 export function Layout(): React.ReactElement {
@@ -9,6 +10,7 @@ export function Layout(): React.ReactElement {
       <main className={styles.main}>
         <Outlet />
       </main>
+      <CommandPalette />
     </div>
   );
 }

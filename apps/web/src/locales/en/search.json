@@ -1,0 +1,8 @@
+{
+  "title": "Search",
+  "placeholder": "Search pages, sources, and entities...",
+  "noResults": "No results found. Try a different search term.",
+  "resultCount": "{{count}} result(s) found",
+  "searching": "Searching...",
+  "hint": "Type to search... (Esc to close)"
+}

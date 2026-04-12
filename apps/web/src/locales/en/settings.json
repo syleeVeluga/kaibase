@@ -11,6 +11,17 @@
     "localFolder": "Local Folder",
     "status": "Sync Status"
   },
+  "templates": {
+    "title": "Page Templates",
+    "create": "Create Template",
+    "empty": "No templates yet.",
+    "name": "Template Name",
+    "pageType": "Page Type",
+    "sections": "Sections",
+    "aiInstructions": "AI Instructions",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
   "policy": {
     "title": "Policy Rules",
     "edit": "Edit Rules",

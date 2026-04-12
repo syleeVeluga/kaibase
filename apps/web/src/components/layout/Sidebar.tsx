@@ -41,6 +41,53 @@ function SourcesIcon(): React.ReactElement {
   );
 }
 
+function DashboardIcon(): React.ReactElement {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="5" height="5" rx="0.5" />
+      <rect x="9" y="2" width="5" height="5" rx="0.5" />
+      <rect x="2" y="9" width="5" height="5" rx="0.5" />
+      <rect x="9" y="9" width="5" height="5" rx="0.5" />
+    </svg>
+  );
+}
+
+function SearchIcon(): React.ReactElement {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="7" cy="7" r="4.5" />
+      <path d="M10.5 10.5L14 14" />
+    </svg>
+  );
+}
+
+function ActivityIcon(): React.ReactElement {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="2 8 5 4 8 10 11 6 14 8" />
+    </svg>
+  );
+}
+
+function CollectionsIcon(): React.ReactElement {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="12" height="10" rx="1" />
+      <path d="M6 1v2M10 1v2" />
+      <path d="M5 7h6M5 10h4" />
+    </svg>
+  );
+}
+
+function QAIcon(): React.ReactElement {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 3a1 1 0 011-1h10a1 1 0 011 1v7a1 1 0 01-1 1H5l-3 3V3z" />
+      <path d="M6 5h4M6 8h2" />
+    </svg>
+  );
+}
+
 function SettingsIcon(): React.ReactElement {
   return (
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -51,9 +98,14 @@ function SettingsIcon(): React.ReactElement {
 }
 
 const navItems = [
+  { path: '/', labelKey: 'nav.dashboard', icon: <DashboardIcon /> },
   { path: '/inbox', labelKey: 'nav.inbox', icon: <InboxIcon /> },
   { path: '/pages', labelKey: 'nav.pages', icon: <PagesIcon /> },
   { path: '/reviews', labelKey: 'nav.reviews', icon: <ReviewsIcon /> },
+  { path: '/collections', labelKey: 'nav.collections', icon: <CollectionsIcon /> },
+  { path: '/qa', labelKey: 'nav.qa', icon: <QAIcon /> },
+  { path: '/search', labelKey: 'nav.search', icon: <SearchIcon /> },
+  { path: '/activity', labelKey: 'nav.activity', icon: <ActivityIcon /> },
   { path: '/sources', labelKey: 'nav.sources', icon: <SourcesIcon /> },
   { path: '/settings', labelKey: 'nav.settings', icon: <SettingsIcon /> },
 ] as const;

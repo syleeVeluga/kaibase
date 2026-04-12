@@ -1,0 +1,18 @@
+{
+  "title": "Dashboard",
+  "stats": {
+    "totalPages": "Total Pages",
+    "totalSources": "Total Sources",
+    "published": "Published",
+    "drafts": "Drafts",
+    "recentActivity": "Activity (7d)",
+    "collections": "Collections"
+  },
+  "health": {
+    "title": "Knowledge Health",
+    "embeddingCoverage": "Embedding Coverage",
+    "stalePages": "Stale Pages",
+    "pendingReviews": "Pending Reviews",
+    "publishedPages": "Published Pages"
+  }
+}

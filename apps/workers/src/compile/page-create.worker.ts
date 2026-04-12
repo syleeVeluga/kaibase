@@ -11,6 +11,7 @@ import {
   policyPacks,
   entities,
   concepts,
+  pageTemplates,
 } from '@kaibase/db';
 import {
   OpenAIProvider,
@@ -229,9 +230,9 @@ export const pageCreateWorker = new Worker(
       text: s.contentText ?? '',
     }));
 
-    // Fetch extracted entities/concepts in parallel to enrich the page creation prompt
+    // Fetch extracted entities/concepts and active template in parallel
     let workspaceContext: string | undefined;
-    const [entityRecords, conceptRecords] = await Promise.all([
+    const [entityRecords, conceptRecords, activeTemplate] = await Promise.all([
       extractedEntityIds?.length
         ? db
             .select({ name: entities.name, entityType: entities.entityType, description: entities.description })
@@ -244,6 +245,13 @@ export const pageCreateWorker = new Worker(
             .from(concepts)
             .where(inArray(concepts.id, extractedConceptIds))
         : Promise.resolve([]),
+      db.query.pageTemplates.findFirst({
+        where: and(
+          eq(pageTemplates.workspaceId, workspaceId),
+          eq(pageTemplates.pageType, pageType as 'project' | 'entity' | 'concept' | 'brief' | 'answer' | 'summary' | 'comparison' | 'custom'),
+          eq(pageTemplates.isActive, true),
+        ),
+      }),
     ]);
 
     const contextParts: string[] = [];
@@ -263,10 +271,44 @@ export const pageCreateWorker = new Worker(
       workspaceContext = contextParts.join('\n\n');
     }
 
+    // -----------------------------------------------------------------
+    // 3a. Process active template for this page type
+    // -----------------------------------------------------------------
+    let templateSections: CreatePageInput['templateSections'];
+    let templateInstructions: string | undefined;
+    let matchedTemplateId: string | undefined;
+
+    if (activeTemplate) {
+      matchedTemplateId = activeTemplate.id;
+      const sections = activeTemplate.sections as Array<{ name: string; description?: string; required?: boolean }>;
+      if (Array.isArray(sections) && sections.length > 0) {
+        templateSections = sections.map((s) => ({
+          heading: s.name,
+          description: s.description ?? '',
+          required: s.required ?? true,
+        }));
+      }
+      if (activeTemplate.aiInstructions) {
+        templateInstructions = activeTemplate.aiInstructions;
+      }
+      logger.info(
+        { workspaceId, templateId: activeTemplate.id, pageType },
+        'Using page template for compilation',
+      );
+    }
+
+    // Merge template instructions with workspace context
+    if (templateInstructions) {
+      workspaceContext = workspaceContext
+        ? `${workspaceContext}\n\nTemplate instructions:\n${templateInstructions}`
+        : `Template instructions:\n${templateInstructions}`;
+    }
+
     const promptInput: CreatePageInput = {
       sources: createPageSources,
       pageType: pageType as CreatePageInput['pageType'],
       language,
+      templateSections,
       workspaceContext,
     };
 
@@ -306,6 +348,7 @@ export const pageCreateWorker = new Worker(
         status: pageStatus,
         createdBy: 'ai',
         language,
+        templateId: matchedTemplateId ?? null,
       });
 
       // 5. Create Citation records for each source referenced in blocks
@@ -339,6 +382,7 @@ export const pageCreateWorker = new Worker(
       await tx.insert(compilationTraces).values({
         pageId,
         sourceIds: usableSources.map((s) => s.id),
+        templateId: matchedTemplateId ?? null,
         compilationLevel: 'L0',
         reasoning: result.reasoning,
         modelUsed: response.model,

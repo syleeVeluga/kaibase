@@ -3,9 +3,14 @@
     "name": "Kaibase"
   },
   "nav": {
+    "dashboard": "Dashboard",
     "inbox": "Inbox",
     "pages": "Pages",
     "reviews": "Reviews",
+    "collections": "Collections",
+    "qa": "Q&A",
+    "search": "Search",
+    "activity": "Activity",
     "sources": "Sources",
     "settings": "Settings"
   },

@@ -11,6 +11,12 @@ import { pageRoutes } from './routes/pages.js';
 import { reviewRoutes } from './routes/reviews.js';
 import { policyRoutes } from './routes/policies.js';
 import { healthRoutes } from './routes/health.js';
+import { collectionRoutes } from './routes/collections.js';
+import { qaRoutes } from './routes/qa.js';
+import { searchRoutes } from './routes/search.js';
+import { activityRoutes } from './routes/activity.js';
+import { templateRoutes } from './routes/templates.js';
+import { dashboardRoutes } from './routes/dashboard.js';
 
 export const app = new Hono();
 
@@ -35,3 +41,9 @@ app.route('/api/v1/workspaces/:wid/connectors', connectorRoutes);
 app.route('/api/v1/workspaces/:wid/pages', pageRoutes);
 app.route('/api/v1/workspaces/:wid/reviews', reviewRoutes);
 app.route('/api/v1/workspaces/:wid/policy', policyRoutes);
+app.route('/api/v1/workspaces/:wid/collections', collectionRoutes);
+app.route('/api/v1/workspaces/:wid/qa', qaRoutes);
+app.route('/api/v1/workspaces/:wid/search', searchRoutes);
+app.route('/api/v1/workspaces/:wid/activity', activityRoutes);
+app.route('/api/v1/workspaces/:wid/templates', templateRoutes);
+app.route('/api/v1/workspaces/:wid/dashboard', dashboardRoutes);

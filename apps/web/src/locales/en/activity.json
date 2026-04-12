@@ -1,0 +1,24 @@
+{
+  "title": "Activity",
+  "empty": "No activity events yet.",
+  "loadMore": "Load more",
+  "filter": {
+    "all": "All events"
+  },
+  "eventType": {
+    "ingest": "Source Ingested",
+    "classify": "Source Classified",
+    "page_create": "Page Created",
+    "page_update": "Page Updated",
+    "page_publish": "Page Published",
+    "query": "Question Asked",
+    "answer": "Answer Generated",
+    "review_create": "Review Created",
+    "review_complete": "Review Completed",
+    "lint": "Lint Check",
+    "digest": "Digest Sent",
+    "channel_send": "Channel Message",
+    "mcp_call": "MCP Call",
+    "policy_update": "Policy Updated"
+  }
+}

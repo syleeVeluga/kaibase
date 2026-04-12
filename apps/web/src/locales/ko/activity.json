@@ -1,0 +1,24 @@
+{
+  "title": "활동",
+  "empty": "아직 활동 이벤트가 없습니다.",
+  "loadMore": "더 보기",
+  "filter": {
+    "all": "모든 이벤트"
+  },
+  "eventType": {
+    "ingest": "소스 수집",
+    "classify": "소스 분류",
+    "page_create": "페이지 생성",
+    "page_update": "페이지 수정",
+    "page_publish": "페이지 게시",
+    "query": "질문",
+    "answer": "답변 생성",
+    "review_create": "리뷰 생성",
+    "review_complete": "리뷰 완료",
+    "lint": "린트 검사",
+    "digest": "다이제스트 전송",
+    "channel_send": "채널 메시지",
+    "mcp_call": "MCP 호출",
+    "policy_update": "정책 수정"
+  }
+}

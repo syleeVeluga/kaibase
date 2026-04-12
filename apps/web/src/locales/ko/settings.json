@@ -11,6 +11,17 @@
     "localFolder": "로컬 폴더",
     "status": "동기화 상태"
   },
+  "templates": {
+    "title": "페이지 템플릿",
+    "create": "템플릿 만들기",
+    "empty": "아직 템플릿이 없습니다.",
+    "name": "템플릿 이름",
+    "pageType": "페이지 유형",
+    "sections": "섹션",
+    "aiInstructions": "AI 지시사항",
+    "active": "활성",
+    "inactive": "비활성"
+  },
   "policy": {
     "title": "정책 규칙",
     "edit": "규칙 편집",

@@ -1,0 +1,24 @@
+{
+  "title": "컬렉션",
+  "empty": "컬렉션이 없습니다.",
+  "create": "컬렉션 만들기",
+  "type": {
+    "inbox": "수신함",
+    "project": "프로젝트",
+    "entities": "엔티티",
+    "concepts": "개념",
+    "briefs": "브리프",
+    "review_queue": "리뷰 대기열",
+    "knowledge_index": "지식 인덱스",
+    "activity_log": "활동 로그",
+    "custom": "사용자 정의"
+  },
+  "detail": {
+    "title": "제목",
+    "type": "유형",
+    "status": "상태",
+    "updated": "수정일",
+    "pages": "페이지",
+    "empty": "이 컬렉션에 페이지가 없습니다."
+  }
+}
