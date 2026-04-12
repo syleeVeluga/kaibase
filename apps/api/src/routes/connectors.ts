@@ -79,11 +79,10 @@ connectorRoutes.post('/:id/sync', async (c) => {
     .where(and(eq(sourceConnectors.id, id), eq(sourceConnectors.workspaceId, workspaceId)))
     .limit(1);
 
-  if (rows.length === 0) {
+  const connector = rows[0];
+  if (!connector) {
     throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
   }
-
-  const connector = rows[0]!;
 
   if (connector.connectorType !== 'local_folder') {
     throw new AppError(400, 'UNSUPPORTED_CONNECTOR', 'errors.unsupportedConnector');

@@ -13,3 +13,4 @@ Thumbs.db
 !.yarn/sdks
 !.yarn/versions
 *.tsbuildinfo
+.claude/settings.local.json

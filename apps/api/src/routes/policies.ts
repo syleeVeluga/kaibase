@@ -24,7 +24,7 @@ policyRoutes.use('*', workspaceMiddleware());
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function getActivePack(workspaceId: string) {
+async function getActivePack(workspaceId: string): Promise<typeof policyPacks.$inferSelect> {
   const [row] = await db
     .select()
     .from(policyPacks)
@@ -139,7 +139,8 @@ policyRoutes.get('/versions', async (c) => {
   const hasMore = versions.length > limit;
   if (hasMore) versions.pop();
 
-  const nextCursor = hasMore ? String(versions[versions.length - 1]!.version) : null;
+  const lastVersion = versions[versions.length - 1];
+  const nextCursor = hasMore && lastVersion ? String(lastVersion.version) : null;
 
   return c.json({ versions, nextCursor });
 });
