@@ -1,14 +1,14 @@
 /**
- * Entity and concept extraction prompt.
+ * Entity, concept, and relation extraction prompt.
  *
  * Extracts named entities (people, organizations, products, technologies,
- * locations, events) and abstract concepts from source text. Uses the
- * fast/cheap model tier.
+ * locations, events), abstract concepts, and source-local relation triples
+ * from source text. Uses the fast/cheap model tier.
  */
 
 import type { LLMMessage } from '../providers/provider.interface.js';
 
-export const PROMPT_VERSION = 'v1';
+export const PROMPT_VERSION = 'v2';
 
 export interface ExtractEntitiesInput {
   /** The raw text content of the source. */
@@ -49,9 +49,41 @@ export interface ExtractedConcept {
   relatedConcepts: string[];
 }
 
+export interface ExtractedRelationNode {
+  /** Source-local text for the subject or object node. */
+  text: string;
+  /** Best-effort node type classification. */
+  type?: ExtractedEntity['type'] | 'concept' | 'value' | 'unknown';
+  /** Matching known entity name when grounding succeeds. */
+  matchedKnownEntity?: string | null;
+}
+
+export interface ExtractedRelationEvidence {
+  /** Short supporting snippet from the source. */
+  snippet: string;
+  /** Best-effort character offset for the start of the evidence span. */
+  charStart?: number | null;
+  /** Best-effort character offset for the end of the evidence span. */
+  charEnd?: number | null;
+}
+
+export interface ExtractedRelation {
+  /** Triple subject node. */
+  subject: ExtractedRelationNode;
+  /** Stable predicate identifier, preferably snake_case. */
+  predicate: string;
+  /** Triple object node. */
+  object: ExtractedRelationNode;
+  /** Confidence score from 0.0 to 1.0. */
+  confidence: number;
+  /** Optional supporting evidence for the triple. */
+  evidence?: ExtractedRelationEvidence | null;
+}
+
 export interface ExtractEntitiesResult {
   entities: ExtractedEntity[];
   concepts: ExtractedConcept[];
+  relations: ExtractedRelation[];
 }
 
 /**
@@ -83,7 +115,7 @@ export function extractEntitiesPrompt(
 
   const systemMessage: LLMMessage = {
     role: 'system',
-    content: `You are Kaibase, an AI knowledge compiler. Your task is to extract named entities and abstract concepts from a source document.
+    content: `You are Kaibase, an AI knowledge compiler. Your task is to extract named entities, abstract concepts, and source-local relation triples from a source document.
 
 Entity types:
 - "person": Individual people (by name)
@@ -102,6 +134,10 @@ Extraction guidelines:
 - For each entity, note any aliases or alternative references in the source.
 - For concepts, identify the 2-5 most significant abstract topics discussed.
 - If known entities are provided, match extracted entities to them when the names or aliases overlap.
+- Extract only relations that are directly supported by the source text.
+- Express predicates as concise English snake_case identifiers such as "belongs_to", "uses", or "has_core_technology".
+- Keep relations source-local. Do not try to resolve page links or canonical graph edges here.
+- Include a short evidence snippet for each relation whenever possible.
 - ${languageInstruction}${workspaceCtx}${knownEntitiesCtx}
 
 Respond ONLY with valid JSON matching this schema:
@@ -121,6 +157,27 @@ Respond ONLY with valid JSON matching this schema:
       "description": string,
       "relatedConcepts": string[]
     }
+  ],
+  "relations": [
+    {
+      "subject": {
+        "text": string,
+        "type": "person" | "organization" | "product" | "technology" | "location" | "event" | "concept" | "value" | "unknown" | null,
+        "matchedKnownEntity": string | null
+      },
+      "predicate": string,
+      "object": {
+        "text": string,
+        "type": "person" | "organization" | "product" | "technology" | "location" | "event" | "concept" | "value" | "unknown" | null,
+        "matchedKnownEntity": string | null
+      },
+      "confidence": number,
+      "evidence": {
+        "snippet": string,
+        "charStart": number | null,
+        "charEnd": number | null
+      } | null
+    }
   ]
 }
 
@@ -129,7 +186,7 @@ Prompt version: ${PROMPT_VERSION}`,
 
   const userMessage: LLMMessage = {
     role: 'user',
-    content: `Extract entities and concepts from the following source:${titleInfo}
+    content: `Extract entities, concepts, and relation triples from the following source:${titleInfo}
 
 --- SOURCE CONTENT ---
 ${input.sourceText}

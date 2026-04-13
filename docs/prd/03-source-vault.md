@@ -144,13 +144,21 @@ Check    & Parse
 
 | Data | Storage |
 |------|---------|
-| Source metadata, content_text, status, **source_uri** | PostgreSQL `source` table |
+| Source metadata, content_text, status, **source_uri**, derived source-local AI metadata | PostgreSQL `source` table |
 | **Source reference** (connector_id, original_path, storage_uri, last_synced_at) | PostgreSQL `source_connector_ref` table |
 | Binary files (only for direct uploads and URL snapshots) | Object Storage (S3-compatible) |
 | Extracted text from attachments | PostgreSQL `source_attachment.content_text` |
 | Source embeddings | PostgreSQL `source_embedding` table (pgvector) |
 
 > **Key distinction:** For connected sources (local folders, cloud storage), the binary file stays in the user's original location. Kaibase stores only the reference URI and extracted content. For direct uploads and URL submissions, the binary is stored in Kaibase's object storage as a fallback.
+
+### Prototype Derived Metadata
+
+During the prototype phase, source-local AI extraction artifacts can be appended to `source.raw_metadata` as JSONB. This includes classification outputs, summaries, and candidate entity/relation triples extracted from an individual source.
+
+- This metadata is **source-scoped evidence**, not canonical truth.
+- It exists to improve ingest usability and to preserve machine-readable facts before page matching matures.
+- Revalidation, promotion into dedicated tables, and entity/page resolution remain follow-up work.
 
 ---
 
@@ -170,8 +178,8 @@ Each source type goes through a normalization pipeline:
 ## Immutability Contract
 
 - Source records are **insert-only** after creation
-- The only mutable fields are `status` (processing state) and `last_synced_at` (connector sync timestamp)
-- `content_text`, `raw_metadata`, and binary files are never modified
+- The mutable fields are `status` (processing state), `last_synced_at` (connector sync timestamp), and derived `raw_metadata` enrichment written by the ingest pipeline
+- `content_text` and binary files are never modified after parsing/storage
 - When a connected source file changes, a new version record is created (previous version preserved)
 - Kaibase never modifies the original file in the user's storage
 - Deleting sources requires admin action and creates an audit trail

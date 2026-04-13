@@ -18,6 +18,9 @@ export {
   type ExtractEntitiesInput,
   type ExtractedEntity,
   type ExtractedConcept,
+  type ExtractedRelationNode,
+  type ExtractedRelationEvidence,
+  type ExtractedRelation,
   type ExtractEntitiesResult,
 } from './extract-entities.js';
 

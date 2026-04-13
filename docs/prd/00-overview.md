@@ -153,7 +153,7 @@ Teams using IDE/coding agents that want AI output auto-accumulated as page asset
 | Karpathy Layer | Kaibase Equivalent | Phase |
 |----------------|--------------------|-------|
 | **1. Data Ingest** | Source Vault + Intake Gateway — web upload, URL, email, Slack, Discord, MCP | Phase 0–1 |
-| **2. LLM Compile** | AI Knowledge Compiler — classify, summarize, extract entities, create/update pages (single source → multiple pages), attach citations | Phase 0 |
+| **2. LLM Compile** | AI Knowledge Compiler — classify, summarize, extract entities, capture source-local relation triples, create/update pages (single source → multiple pages), attach citations | Phase 0 |
 | **3. IDE / Viewer** | BlockSuite PageEditor — rich document editing and viewing surface | Phase 0 |
 | **4. Q&A** | Q&A Service — hybrid search, cited answers, answer promotion to pages | Phase 0 |
 | **5. Output → Re-deposit** | Answer Promotion + Channel Output — valuable outputs saved back as canonical pages; digests sent to channels | Phase 0–1 |

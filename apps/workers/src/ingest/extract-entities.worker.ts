@@ -12,11 +12,18 @@ import type {
   ExtractEntitiesResult,
   ExtractedEntity,
   ExtractedConcept,
+  ExtractedRelation,
+  ExtractedRelationEvidence,
+  ExtractedRelationNode,
   LLMReasoningEffort,
 } from '@kaibase/ai';
 import { resolveLanguageFromText } from '@kaibase/shared';
 import type { EntityType } from '@kaibase/shared';
 import pino from 'pino';
+import {
+  buildEntityTriplesMetadata,
+  mergeSourceMetadataWithEntityTriples,
+} from './extract-entities.metadata.js';
 
 const logger = pino({ name: 'extract-entities-worker' });
 
@@ -27,7 +34,7 @@ function getLLM(): OpenAIProvider {
   if (!llm) {
     llm = new OpenAIProvider({
       apiKey: process.env['OPENAI_API_KEY'] ?? '',
-      model: process.env['EXTRACT_ENTITIES_MODEL'] ?? 'gpt-5.4-mini',
+      model: process.env['EXTRACT_ENTITIES_MODEL'] ?? 'gpt-5.4-nano',
     });
   }
   return llm;
@@ -46,6 +53,91 @@ const MAX_KNOWN_ENTITIES = 200;
 const VALID_ENTITY_TYPES: ReadonlySet<string> = new Set([
   'person', 'organization', 'product', 'technology', 'location', 'event', 'custom',
 ]);
+
+const VALID_RELATION_NODE_TYPES: ReadonlySet<string> = new Set([
+  'person',
+  'organization',
+  'product',
+  'technology',
+  'location',
+  'event',
+  'concept',
+  'value',
+  'unknown',
+]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function normalizeRelationNode(value: unknown): ExtractedRelationNode | null {
+  if (!isRecord(value) || typeof value.text !== 'string') {
+    return null;
+  }
+
+  const text = value.text.trim();
+  if (text.length === 0) {
+    return null;
+  }
+
+  const normalized: ExtractedRelationNode = { text };
+  if (
+    typeof value.type === 'string'
+    && VALID_RELATION_NODE_TYPES.has(value.type)
+  ) {
+    normalized.type = value.type as ExtractedRelationNode['type'];
+  }
+  if (typeof value.matchedKnownEntity === 'string' && value.matchedKnownEntity.trim().length > 0) {
+    normalized.matchedKnownEntity = value.matchedKnownEntity.trim();
+  }
+
+  return normalized;
+}
+
+function normalizeRelationEvidence(value: unknown): ExtractedRelationEvidence | null {
+  if (value == null) {
+    return null;
+  }
+  if (!isRecord(value) || typeof value.snippet !== 'string') {
+    return null;
+  }
+
+  const snippet = value.snippet.trim();
+  if (snippet.length === 0) {
+    return null;
+  }
+
+  return {
+    snippet,
+    charStart: typeof value.charStart === 'number' ? value.charStart : null,
+    charEnd: typeof value.charEnd === 'number' ? value.charEnd : null,
+  };
+}
+
+function normalizeRelation(value: unknown): ExtractedRelation | null {
+  if (!isRecord(value) || typeof value.predicate !== 'string') {
+    return null;
+  }
+
+  const predicate = value.predicate.trim();
+  const subject = normalizeRelationNode(value.subject);
+  const object = normalizeRelationNode(value.object);
+  if (predicate.length === 0 || !subject || !object) {
+    return null;
+  }
+
+  if (typeof value.confidence !== 'number' || !Number.isFinite(value.confidence)) {
+    return null;
+  }
+
+  return {
+    subject,
+    predicate,
+    object,
+    confidence: Math.max(0, Math.min(1, value.confidence)),
+    evidence: normalizeRelationEvidence(value.evidence),
+  };
+}
 
 function validateEntityType(type: string): EntityType {
   if (!VALID_ENTITY_TYPES.has(type)) {
@@ -120,7 +212,7 @@ async function upsertConcept(
   return row.id;
 }
 
-export async function processExtractEntitiesJob(job: Job): Promise<{ sourceId: string; extracted: boolean; entityCount?: number; conceptCount?: number; reason?: string }> {
+export async function processExtractEntitiesJob(job: Job): Promise<{ sourceId: string; extracted: boolean; entityCount?: number; conceptCount?: number; relationCount?: number; reason?: string }> {
     const { sourceId, workspaceId, classification } = job.data as {
       sourceId: string;
       workspaceId: string;
@@ -137,6 +229,7 @@ export async function processExtractEntitiesJob(job: Job): Promise<{ sourceId: s
         id: sources.id,
         contentText: sources.contentText,
         title: sources.title,
+        rawMetadata: sources.rawMetadata,
       })
       .from(sources)
       .where(
@@ -225,7 +318,20 @@ export async function processExtractEntitiesJob(job: Job): Promise<{ sourceId: s
     // 5. Parse response
     let result: ExtractEntitiesResult;
     try {
-      result = JSON.parse(response.content) as ExtractEntitiesResult;
+      const parsed = JSON.parse(response.content) as unknown;
+      if (!isRecord(parsed) || !Array.isArray(parsed.entities) || !Array.isArray(parsed.concepts)) {
+        throw new Error('Extract entities LLM response missing required fields (entities, concepts)');
+      }
+
+      result = {
+        entities: parsed.entities as ExtractedEntity[],
+        concepts: parsed.concepts as ExtractedConcept[],
+        relations: Array.isArray(parsed.relations)
+          ? parsed.relations
+              .map((relation) => normalizeRelation(relation))
+              .filter((relation): relation is ExtractedRelation => relation !== null)
+          : [],
+      };
     } catch (parseError: unknown) {
       logger.error(
         { sourceId, content: response.content },
@@ -239,33 +345,44 @@ export async function processExtractEntitiesJob(job: Job): Promise<{ sourceId: s
       );
     }
 
-    if (!Array.isArray(result.entities) || !Array.isArray(result.concepts)) {
-      logger.error(
-        { sourceId, result },
-        'LLM response missing required fields',
-      );
-      throw new Error(
-        'Extract entities LLM response missing required fields (entities, concepts)',
-      );
-    }
-
     // 6. Upsert entities and concepts to DB (parallel within each group)
     const [entityIds, conceptIds] = await Promise.all([
       Promise.all(result.entities.map((entity) => upsertEntity(workspaceId, entity, language))),
       Promise.all(result.concepts.map((concept) => upsertConcept(workspaceId, concept, language))),
     ]);
 
+    const entityTriples = buildEntityTriplesMetadata({
+      promptVersion: EXTRACT_ENTITIES_PROMPT_VERSION,
+      model: response.model,
+      language,
+      tokenUsage: response.tokenUsage,
+      triples: result.relations,
+    });
+
+    const mergedMetadata = mergeSourceMetadataWithEntityTriples(
+      (source.rawMetadata as Record<string, unknown>) ?? {},
+      entityTriples,
+    );
+
     logger.info(
       {
         sourceId,
         entityCount: entityIds.length,
         conceptCount: conceptIds.length,
+        relationCount: result.relations.length,
       },
-      'Entities and concepts upserted',
+      'Entities, concepts, and relation triples processed',
     );
 
-    // 7. Append activity event + enqueue page-create (independent, run in parallel)
     await Promise.all([
+      db
+        .update(sources)
+        .set({
+          rawMetadata: mergedMetadata,
+        })
+        .where(
+          and(eq(sources.id, sourceId), eq(sources.workspaceId, workspaceId)),
+        ),
       db.insert(activityEvents).values({
         workspaceId,
         eventType: 'ingest',
@@ -283,8 +400,10 @@ export async function processExtractEntitiesJob(job: Job): Promise<{ sourceId: s
           },
           entityCount: result.entities.length,
           conceptCount: result.concepts.length,
+          relationCount: result.relations.length,
           entityNames: result.entities.map((e) => e.name),
           conceptNames: result.concepts.map((c) => c.name),
+          relationPredicates: [...new Set(result.relations.map((relation) => relation.predicate))],
         },
       }),
       queues.aiPageCompile.add('page-create', {
@@ -306,5 +425,6 @@ export async function processExtractEntitiesJob(job: Job): Promise<{ sourceId: s
       extracted: true,
       entityCount: entityIds.length,
       conceptCount: conceptIds.length,
+      relationCount: result.relations.length,
     };
 }

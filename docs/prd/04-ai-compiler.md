@@ -76,6 +76,9 @@ Source (new/updated)
        |
   Entity / Concept Extraction
        |
+  Source-local Relation Triple Capture
+  (candidate facts stored on the source for later resolution)
+       |
   Page Matching ← KEY STEP
   "Which existing pages does this source touch?"
   Target: avg 10-15 pages per source
@@ -108,6 +111,7 @@ Page Proj.  Entity    Concept
 | `summarize` | Generate concise summary of source content | Summary text (EN + KO if bilingual workspace) |
 | `extract_entities` | Identify people, organizations, products, technologies, locations | Entity records |
 | `extract_concepts` | Identify abstract topics/themes | Concept records |
+| `extract_relations` | Capture source-local entity/relation triples before page resolution | Candidate fact JSON stored on the source |
 | `match_pages` | Find existing canonical pages related to this source | Page match list with confidence |
 | `create_page` | Generate new canonical page from source(s) | CanonicalPage draft |
 | `update_page` | Propose updates to existing page based on new source | Page update diff |
@@ -124,6 +128,14 @@ The AI classifies sources into:
 - **Topic:** Subject matter tags
 - **Urgency:** normal / important / critical
 - **Content type:** report, meeting_notes, feedback, incident, research, code, design, other
+
+### Prototype Note: Source-local Candidate Facts
+
+Phase 0 prototypes may capture candidate entity/relation triples directly on the source record before page matching is mature. This is a low-cost extraction step intended to preserve machine-readable facts for later entity resolution and page update logic.
+
+- Candidate triples are stored as source-local JSON metadata, not as canonical graph truth.
+- This step can run on the fast model tier to validate usability and the ingest pipeline before introducing a dedicated revalidation pass.
+- Existing page matching may ignore these triples initially; preserving them early is still valuable because it reduces information loss between ingest and later resolution work.
 
 ---
 
