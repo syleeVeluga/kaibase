@@ -53,6 +53,7 @@
       "model": "Model",
       "temperature": "Temperature",
       "reasoningEffort": "Reasoning Effort",
+      "promptVersion": "Prompt Version",
       "systemPrompt": "System Prompt",
       "userPrompt": "User Prompt Template",
       "systemPromptPlaceholder": "Override the system prompt (leave empty to use default)",
@@ -60,7 +61,9 @@
     },
     "actions": {
       "edit": "Edit",
-      "resetToDefault": "Reset to Default"
+      "resetToDefault": "Reset to Default",
+      "viewDefaultTemplate": "View current template",
+      "hideDefaultTemplate": "Hide template"
     },
     "status": {
       "customized": "Customized",

@@ -144,6 +144,7 @@ function FunctionCard({ config, functionDefault, wid }: FunctionCardProps): Reac
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showDefaultTemplate, setShowDefaultTemplate] = useState(false);
 
   // Form state
   const [model, setModel] = useState(config.model);
@@ -219,6 +220,9 @@ function FunctionCard({ config, functionDefault, wid }: FunctionCardProps): Reac
       <div className={styles.cardDescription}>{description}</div>
 
       <div className={styles.configSummary}>
+        {functionDefault && (
+          <span className={styles.versionTag}>{functionDefault.promptVersion}</span>
+        )}
         <span className={styles.configTag}>
           <span className={styles.configTagLabel}>{t('settings:promptStudio.fields.model')}:</span> {config.model}
         </span>
@@ -314,6 +318,34 @@ function FunctionCard({ config, functionDefault, wid }: FunctionCardProps): Reac
               rows={8}
             />
           </div>
+
+          {functionDefault && (
+            <div className={styles.defaultTemplateSection}>
+              <button
+                className={styles.defaultTemplateToggle}
+                onClick={() => setShowDefaultTemplate(!showDefaultTemplate)}
+              >
+                <span>{showDefaultTemplate ? '▾' : '▸'}</span>
+                {showDefaultTemplate
+                  ? t('settings:promptStudio.actions.hideDefaultTemplate')
+                  : t('settings:promptStudio.actions.viewDefaultTemplate')}
+                {' '}
+                <span className={styles.versionTag}>{functionDefault.promptVersion}</span>
+              </button>
+              {showDefaultTemplate && (
+                <div className={styles.defaultTemplateContent}>
+                  <div className={styles.defaultTemplateLabel}>
+                    {t('settings:promptStudio.fields.systemPrompt')}
+                  </div>
+                  <pre className={styles.defaultTemplateText}>{functionDefault.defaultSystemPrompt}</pre>
+                  <div className={styles.defaultTemplateLabel}>
+                    {t('settings:promptStudio.fields.userPrompt')}
+                  </div>
+                  <pre className={styles.defaultTemplateText}>{functionDefault.defaultUserPrompt}</pre>
+                </div>
+              )}
+            </div>
+          )}
 
           {variables.length > 0 && (
             <div className={styles.variablesSection}>

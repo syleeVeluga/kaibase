@@ -9,18 +9,23 @@ import type { AiPromptFunctionId, AiReasoningEffort, AiPromptFunctionDefault } f
 import type { LLMMessage, LLMReasoningEffort } from '../providers/provider.interface.js';
 import {
   PROMPT_VERSION as CLASSIFY_PROMPT_VERSION,
+  classifySourcePrompt,
 } from '../prompts/classify.js';
 import {
   PROMPT_VERSION as SUMMARIZE_PROMPT_VERSION,
+  summarizeSourcePrompt,
 } from '../prompts/summarize.js';
 import {
   PROMPT_VERSION as EXTRACT_ENTITIES_PROMPT_VERSION,
+  extractEntitiesPrompt,
 } from '../prompts/extract-entities.js';
 import {
   PROMPT_VERSION as CREATE_PAGE_PROMPT_VERSION,
+  createPagePrompt,
 } from '../prompts/create-page.js';
 import {
   PROMPT_VERSION as ANSWER_QUESTION_PROMPT_VERSION,
+  answerQuestionPrompt,
 } from '../prompts/answer-question.js';
 
 /** Resolved config after merging DB override, env var, and code default. */
@@ -58,6 +63,33 @@ interface FunctionDefault {
   promptVersion: string;
   description: { en: string; ko: string };
   variables: string[];
+  defaultSystemPrompt: string;
+  defaultUserPrompt: string;
+}
+
+/** Renders a prompt builder with placeholder inputs for UI preview. */
+function renderDefaultPrompts(functionId: AiPromptFunctionId): { system: string; user: string } {
+  let msgs: LLMMessage[];
+  switch (functionId) {
+    case 'classify':
+      msgs = classifySourcePrompt({ sourceText: '{{sourceText}}', language: 'en' });
+      break;
+    case 'summarize':
+      msgs = summarizeSourcePrompt({ sourceText: '{{sourceText}}', language: 'en' });
+      break;
+    case 'extract-entities':
+      msgs = extractEntitiesPrompt({ sourceText: '{{sourceText}}', language: 'en' });
+      break;
+    case 'create-page':
+      msgs = createPagePrompt({ sources: [], pageType: 'project', language: 'en' });
+      break;
+    case 'answer-question':
+      msgs = answerQuestionPrompt({ question: '{{question}}', language: 'en', contextPages: [] });
+      break;
+  }
+  const system = msgs.find((m) => m.role === 'system')?.content ?? '';
+  const user = msgs.find((m) => m.role === 'user')?.content ?? '';
+  return { system, user };
 }
 
 /** Code-level defaults for each AI function. */
@@ -71,6 +103,7 @@ export const FUNCTION_DEFAULTS: Record<AiPromptFunctionId, FunctionDefault> = {
       ko: '소스 문서를 유형, 주제, 섹션, 긴급도별로 분류합니다',
     },
     variables: ['sourceText', 'sourceTitle', 'sourceTypeHint', 'language', 'workspaceContext'],
+    ...(() => { const p = renderDefaultPrompts('classify'); return { defaultSystemPrompt: p.system, defaultUserPrompt: p.user }; })(),
   },
   'summarize': {
     model: 'gpt-5.4',
@@ -81,6 +114,7 @@ export const FUNCTION_DEFAULTS: Record<AiPromptFunctionId, FunctionDefault> = {
       ko: '소스에서 핵심 요약과 주요 포인트를 생성합니다',
     },
     variables: ['sourceText', 'sourceTitle', 'language', 'maxSentences', 'workspaceContext'],
+    ...(() => { const p = renderDefaultPrompts('summarize'); return { defaultSystemPrompt: p.system, defaultUserPrompt: p.user }; })(),
   },
   'extract-entities': {
     model: 'gpt-5.4-nano',
@@ -91,6 +125,7 @@ export const FUNCTION_DEFAULTS: Record<AiPromptFunctionId, FunctionDefault> = {
       ko: '소스에서 엔티티, 개념, 관계 트리플을 추출합니다',
     },
     variables: ['sourceText', 'sourceTitle', 'language', 'knownEntities', 'workspaceContext'],
+    ...(() => { const p = renderDefaultPrompts('extract-entities'); return { defaultSystemPrompt: p.system, defaultUserPrompt: p.user }; })(),
   },
   'create-page': {
     model: 'gpt-5.4',
@@ -101,6 +136,7 @@ export const FUNCTION_DEFAULTS: Record<AiPromptFunctionId, FunctionDefault> = {
       ko: '소스 자료로부터 정식 지식 페이지를 생성합니다',
     },
     variables: ['sources', 'pageType', 'language', 'templateSections', 'instructions', 'workspaceContext', 'suggestedTitle'],
+    ...(() => { const p = renderDefaultPrompts('create-page'); return { defaultSystemPrompt: p.system, defaultUserPrompt: p.user }; })(),
   },
   'answer-question': {
     model: 'gpt-5.4',
@@ -111,6 +147,7 @@ export const FUNCTION_DEFAULTS: Record<AiPromptFunctionId, FunctionDefault> = {
       ko: '지식 기반의 인용 근거와 함께 사용자 질문에 답변합니다',
     },
     variables: ['question', 'language', 'contextPages', 'contextSources', 'conversationHistory', 'workspaceContext'],
+    ...(() => { const p = renderDefaultPrompts('answer-question'); return { defaultSystemPrompt: p.system, defaultUserPrompt: p.user }; })(),
   },
 };
 
@@ -215,6 +252,8 @@ export function getPromptFunctionDefaults(): AiPromptFunctionDefault[] {
       promptVersion: d.promptVersion,
       description: d.description,
       variables: d.variables,
+      defaultSystemPrompt: d.defaultSystemPrompt,
+      defaultUserPrompt: d.defaultUserPrompt,
     };
   });
 }

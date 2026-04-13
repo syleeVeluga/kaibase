@@ -3,6 +3,14 @@ const BASE_URL = '/api/v1';
 export class ApiClient {
   private refreshPromise: Promise<boolean> | null = null;
 
+  private async fetchOrThrow(url: string, options: RequestInit): Promise<Response> {
+    try {
+      return await fetch(url, options);
+    } catch {
+      throw new NetworkError();
+    }
+  }
+
   private getToken(): string | null {
     return localStorage.getItem('accessToken');
   }
@@ -40,7 +48,7 @@ export class ApiClient {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    let response = await fetch(`${BASE_URL}${path}`, {
+    let response = await this.fetchOrThrow(`${BASE_URL}${path}`, {
       ...options,
       headers,
     });
@@ -50,7 +58,7 @@ export class ApiClient {
       const refreshed = await this.tryRefresh();
       if (refreshed) {
         headers['Authorization'] = `Bearer ${this.getToken() ?? ''}`;
-        response = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+        response = await this.fetchOrThrow(`${BASE_URL}${path}`, { ...options, headers });
       }
     }
 
@@ -72,28 +80,29 @@ export class ApiClient {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) return false;
 
+    let response: Response;
+
     try {
-      const response = await fetch(`${BASE_URL}/auth/refresh`, {
+      response = await this.fetchOrThrow(`${BASE_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),
       });
-
-      if (!response.ok) {
-        this.clearTokens();
-        return false;
-      }
-
-      const data = (await response.json()) as {
-        accessToken: string;
-        refreshToken: string;
-      };
-      this.setTokens(data.accessToken, data.refreshToken);
-      return true;
     } catch {
+      return false;
+    }
+
+    if (!response.ok) {
       this.clearTokens();
       return false;
     }
+
+    const data = (await response.json()) as {
+      accessToken: string;
+      refreshToken: string;
+    };
+    this.setTokens(data.accessToken, data.refreshToken);
+    return true;
   }
 
   get<T>(path: string): Promise<T> {
@@ -142,6 +151,13 @@ export class ApiError extends Error {
     public readonly body: Record<string, unknown>,
   ) {
     super(`API Error ${status}: ${JSON.stringify(body)}`);
+  }
+}
+
+export class NetworkError extends Error {
+  constructor() {
+    super('Network request failed');
+    this.name = 'NetworkError';
   }
 }
 

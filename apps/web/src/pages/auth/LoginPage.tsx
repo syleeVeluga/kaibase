@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../lib/auth-context.js';
 import { ApiError } from '../../lib/api-client.js';
+import { getErrorMessage } from '../../lib/get-error-message.js';
 import * as styles from './AuthPage.css.js';
 
 const isDev = import.meta.env.DEV;
@@ -31,9 +32,9 @@ export function LoginPage(): React.ReactElement {
         const code = err.body['code'] as string | undefined;
         setError(code === 'INVALID_CREDENTIALS'
           ? t('invalidCredentials', { ns: 'errors' })
-          : t('internal', { ns: 'errors' }));
+          : getErrorMessage(err, t));
       } else {
-        setError(t('internal', { ns: 'errors' }));
+        setError(getErrorMessage(err, t));
       }
     } finally {
       setLoading(false);
@@ -46,8 +47,8 @@ export function LoginPage(): React.ReactElement {
     try {
       await devLogin();
       navigate('/', { replace: true });
-    } catch {
-      setError(t('internal', { ns: 'errors' }));
+    } catch (err) {
+      setError(getErrorMessage(err, t));
     } finally {
       setLoading(false);
     }

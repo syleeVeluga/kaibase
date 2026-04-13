@@ -1,14 +1,21 @@
 /**
- * Entity, concept, and relation extraction prompt.
+ * Entity, concept, and relation extraction prompt — v3.
  *
  * Extracts named entities (people, organizations, products, technologies,
- * locations, events), abstract concepts, and source-local relation triples
- * from source text. Uses the fast/cheap model tier.
+ * locations, events), abstract concepts, and source-local relation triples.
+ * The extracted data feeds entity/concept DB records, the knowledge graph,
+ * and page-matching for the compilation step.
+ *
+ * Model tier: fast / cheap (e.g. GPT-4o-mini, Haiku).
  */
 
 import type { LLMMessage } from '../providers/provider.interface.js';
 
-export const PROMPT_VERSION = 'v2';
+export const PROMPT_VERSION = 'v3';
+
+/* ------------------------------------------------------------------ */
+/*  Input / Output interfaces                                         */
+/* ------------------------------------------------------------------ */
 
 export interface ExtractEntitiesInput {
   /** The raw text content of the source. */
@@ -28,7 +35,7 @@ export interface ExtractEntitiesInput {
 }
 
 export interface ExtractedEntity {
-  /** The entity name as it appears in the source. */
+  /** The entity name as it appears in the source (canonical form). */
   name: string;
   /** Entity type classification. */
   type: 'person' | 'organization' | 'product' | 'technology' | 'location' | 'event';
@@ -38,6 +45,10 @@ export interface ExtractedEntity {
   description: string;
   /** If this matches a known entity, the matched name. */
   matchedKnownEntity?: string;
+  /** Confidence that this entity is correctly identified and typed (0.0–1.0). */
+  confidence?: number;
+  /** The role or relevance of this entity in the source context. */
+  contextRole?: string;
 }
 
 export interface ExtractedConcept {
@@ -86,19 +97,17 @@ export interface ExtractEntitiesResult {
   relations: ExtractedRelation[];
 }
 
-/**
- * Build the prompt messages for entity and concept extraction.
- *
- * @param input - The extraction input parameters.
- * @returns LLMMessage array ready to send to a provider.
- */
+/* ------------------------------------------------------------------ */
+/*  Prompt builder                                                     */
+/* ------------------------------------------------------------------ */
+
 export function extractEntitiesPrompt(
   input: ExtractEntitiesInput,
 ): LLMMessage[] {
   const languageInstruction =
     input.language === 'ko'
-      ? 'Write descriptions in Korean. Entity and concept names should be in their original language as they appear in the source.'
-      : 'Write descriptions in English.';
+      ? 'Write descriptions and contextRole in Korean. Entity and concept names should be in their original language as they appear in the source.'
+      : 'Write descriptions and contextRole in English.';
 
   const workspaceCtx = input.workspaceContext
     ? `\n\nWorkspace context:\n${input.workspaceContext}`
@@ -106,7 +115,14 @@ export function extractEntitiesPrompt(
 
   const knownEntitiesCtx =
     input.knownEntities && input.knownEntities.length > 0
-      ? `\n\nKnown entities in this workspace (match against these when possible):\n${JSON.stringify(input.knownEntities, null, 2)}`
+      ? `\n\n──────────────────────────────────────────
+KNOWN ENTITIES IN THIS WORKSPACE
+──────────────────────────────────────────
+Match extracted entities against these when names or aliases overlap.
+When a match is found, set matchedKnownEntity to the known entity's name.
+When uncertain, leave matchedKnownEntity as null — false matches are worse than missed matches.
+
+${JSON.stringify(input.knownEntities, null, 2)}`
       : '';
 
   const titleInfo = input.sourceTitle
@@ -115,30 +131,89 @@ export function extractEntitiesPrompt(
 
   const systemMessage: LLMMessage = {
     role: 'system',
-    content: `You are Kaibase, an AI knowledge compiler. Your task is to extract named entities, abstract concepts, and source-local relation triples from a source document.
+    content: `You are the Entity & Relation Extraction Engine of Kaibase, an AI knowledge operating system.
 
-Entity types:
-- "person": Individual people (by name)
-- "organization": Companies, teams, departments, institutions
-- "product": Products, services, tools, platforms
-- "technology": Programming languages, frameworks, protocols, standards
-- "location": Physical locations, regions, offices
-- "event": Named events, conferences, incidents, milestones
+Your role in the pipeline: After a source is classified and summarized, you extract the structural knowledge — the WHO, WHAT, WHERE, and HOW things relate. Your output directly populates the workspace's entity registry, concept index, and knowledge graph. Precision is paramount: a false entity clutters the graph; a missed entity creates knowledge gaps that compound over time.
 
-Concept types:
-- Abstract topics, methodologies, strategies, architectural patterns, business concepts
+──────────────────────────────────────────
+TASK 1: Extract Named Entities
+──────────────────────────────────────────
 
-Extraction guidelines:
-- Only extract entities that are explicitly named in the source.
-- Do not infer entities that are not mentioned.
-- For each entity, note any aliases or alternative references in the source.
-- For concepts, identify the 2-5 most significant abstract topics discussed.
-- If known entities are provided, match extracted entities to them when the names or aliases overlap.
+For each entity, provide:
+• name — The most complete, canonical form as it appears in the source. If someone is referred to as both "Dr. Kim" and "Sunghee Kim", use "Sunghee Kim" as the name and "Dr. Kim" as an alias.
+• type — One of:
+  - "person": Named individuals. NOT job titles, roles, or unnamed groups.
+  - "organization": Companies, teams, departments, agencies, institutions.
+  - "product": Named products, services, tools, platforms, applications.
+  - "technology": Programming languages, frameworks, protocols, standards, algorithms.
+  - "location": Physical places — cities, offices, regions, countries.
+  - "event": Named events, conferences, incidents, milestones with specific identifiers.
+• aliases — All alternative names, abbreviations, or references found in the source.
+• description — 1–2 sentences explaining this entity's role IN THIS SOURCE (not general knowledge). What did they do? What is their relevance?
+• confidence — How certain you are (0.0–1.0):
+  - 0.9–1.0: Explicitly named, unambiguous type
+  - 0.7–0.89: Named but type could be debated (e.g., is "Kubernetes" a product or technology?)
+  - 0.5–0.69: Implied or partially named (e.g., "the client" when context makes identity clear)
+  - Below 0.5: Do not extract — too uncertain.
+• contextRole — The entity's function in this source (e.g., "project lead", "vendor under evaluation", "technology being deprecated", "meeting organizer").
+
+ENTITY EXTRACTION RULES:
+- Only extract entities that are explicitly named or clearly identifiable in the source.
+- Do NOT extract generic roles without names (e.g., "the team lead" without a name is NOT an entity; "Sarah Chen, team lead" IS).
+- Do NOT extract common nouns as entities (e.g., "database", "server" are not entities unless they are specifically named products).
+- When the same entity is referred to differently (acronyms, first name vs full name, Korean vs English name), consolidate into one entity with aliases.
+- If the source text is in Korean and an entity has both Korean and English names (e.g., "삼성전자" and "Samsung Electronics"), use the more complete form as name and the other as alias.
+
+──────────────────────────────────────────
+TASK 2: Extract Concepts
+──────────────────────────────────────────
+
+Concepts are abstract topics, methodologies, strategies, or patterns that are substantively discussed (not merely mentioned) in the source.
+
+For each concept, provide:
+• name — A concise, reusable label (e.g., "microservices architecture", "zero-trust security", "OKR methodology").
+• description — 1–2 sentences explaining how this concept is discussed or applied in the source.
+• relatedConcepts — Other concepts that co-occur or are logically connected in this source.
+
+CONCEPT EXTRACTION RULES:
+- Extract only concepts that receive substantive treatment — at least a paragraph of discussion or a key role in the source's argument.
+- Do NOT extract trivial or ubiquitous terms (e.g., "software development", "communication").
+- Limit to 2–5 most significant concepts. Quality over quantity.
+- Prefer specific, searchable terms over vague ones.
+
+──────────────────────────────────────────
+TASK 3: Extract Relation Triples
+──────────────────────────────────────────
+
+Relations capture factual connections between entities and concepts as (subject, predicate, object) triples.
+
+• subject / object — Each has:
+  - text: The entity or concept name as it appears in the source.
+  - type: Entity type, "concept", "value" (for quantities/dates), or "unknown".
+  - matchedKnownEntity: If it matches a known workspace entity, that entity's name; otherwise null.
+• predicate — A stable snake_case English identifier describing the relationship.
+  Common predicates: "leads", "belongs_to", "uses", "develops", "acquired", "competes_with", "depends_on", "replaced_by", "scheduled_for", "budgeted_at", "authored", "located_in", "reports_to", "founded", "invested_in".
+  Create domain-specific predicates when needed, but prefer reusable ones.
+• confidence — 0.0 to 1.0 reflecting how directly the source supports this relation.
+  - 0.9–1.0: Explicitly stated (e.g., "Alice leads Project Alpha")
+  - 0.7–0.89: Strongly implied by context
+  - 0.5–0.69: Reasonable inference from surrounding text
+  - Below 0.5: Do not extract.
+• evidence — A short verbatim snippet (under 150 chars) from the source that supports the triple. Include charStart/charEnd offsets on a best-effort basis.
+
+RELATION EXTRACTION RULES:
 - Extract only relations that are directly supported by the source text.
-- Express predicates as concise English snake_case identifiers such as "belongs_to", "uses", or "has_core_technology".
-- Keep relations source-local. Do not try to resolve page links or canonical graph edges here.
-- Include a short evidence snippet for each relation whenever possible.
-- ${languageInstruction}${workspaceCtx}${knownEntitiesCtx}
+- Every relation must have evidence. If you cannot point to supporting text, do not extract it.
+- Do NOT create relations from general world knowledge — only from what THIS source says.
+- Keep relations source-local. Do not try to infer connections to pages or entities outside this source.
+- Prefer specific, attributable relations over vague associations.
+
+──────────────────────────────────────────
+CONSTRAINTS
+──────────────────────────────────────────
+- ${languageInstruction}
+- When in doubt, omit rather than guess. The downstream pipeline can handle missing data; it cannot handle wrong data.
+- Total extraction budget: aim for the most informative set, not the largest.${workspaceCtx}${knownEntitiesCtx}
 
 Respond ONLY with valid JSON matching this schema:
 {
@@ -148,7 +223,9 @@ Respond ONLY with valid JSON matching this schema:
       "type": "person" | "organization" | "product" | "technology" | "location" | "event",
       "aliases": string[],
       "description": string,
-      "matchedKnownEntity": string | null
+      "matchedKnownEntity": string | null,
+      "confidence": number,
+      "contextRole": string
     }
   ],
   "concepts": [
@@ -162,13 +239,13 @@ Respond ONLY with valid JSON matching this schema:
     {
       "subject": {
         "text": string,
-        "type": "person" | "organization" | "product" | "technology" | "location" | "event" | "concept" | "value" | "unknown" | null,
+        "type": string | null,
         "matchedKnownEntity": string | null
       },
       "predicate": string,
       "object": {
         "text": string,
-        "type": "person" | "organization" | "product" | "technology" | "location" | "event" | "concept" | "value" | "unknown" | null,
+        "type": string | null,
         "matchedKnownEntity": string | null
       },
       "confidence": number,

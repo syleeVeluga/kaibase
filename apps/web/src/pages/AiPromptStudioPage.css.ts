@@ -235,3 +235,74 @@ export const savedMessage = style({
   fontSize: vars.fontSize.xs,
   marginTop: vars.space.xs,
 });
+
+export const versionTag = style({
+  display: 'inline-flex',
+  alignItems: 'center',
+  padding: `1px ${vars.space.xs}`,
+  backgroundColor: vars.color.surface,
+  border: `1px solid ${vars.color.border}`,
+  borderRadius: vars.radius.sm,
+  fontSize: '11px',
+  fontFamily: vars.font.mono,
+  color: vars.color.textMuted,
+  fontWeight: 500,
+});
+
+export const defaultTemplateSection = style({
+  marginTop: vars.space.sm,
+  border: `1px solid ${vars.color.border}`,
+  borderRadius: vars.radius.md,
+  overflow: 'hidden',
+});
+
+export const defaultTemplateToggle = style({
+  display: 'flex',
+  alignItems: 'center',
+  gap: vars.space.xs,
+  width: '100%',
+  padding: `${vars.space.xs} ${vars.space.sm}`,
+  background: vars.color.surface,
+  border: 'none',
+  cursor: 'pointer',
+  fontSize: vars.fontSize.xs,
+  color: vars.color.textMuted,
+  textAlign: 'left',
+  ':hover': {
+    color: vars.color.text,
+  },
+});
+
+export const defaultTemplateContent = style({
+  padding: vars.space.sm,
+  backgroundColor: vars.color.background,
+  borderTop: `1px solid ${vars.color.border}`,
+});
+
+export const defaultTemplateLabel = style({
+  fontSize: vars.fontSize.xs,
+  fontWeight: 600,
+  color: vars.color.textMuted,
+  marginBottom: vars.space.xs,
+  marginTop: vars.space.sm,
+  selectors: {
+    '&:first-child': {
+      marginTop: 0,
+    },
+  },
+});
+
+export const defaultTemplateText = style({
+  margin: 0,
+  padding: vars.space.sm,
+  backgroundColor: vars.color.surface,
+  borderRadius: vars.radius.sm,
+  fontSize: '11px',
+  fontFamily: vars.font.mono,
+  lineHeight: '1.6',
+  color: vars.color.textSecondary,
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word',
+  maxHeight: '200px',
+  overflowY: 'auto',
+});

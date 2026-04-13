@@ -16,6 +16,7 @@
   "duplicate": "This item already exists",
   "invalidReference": "A referenced item does not exist",
   "llmUnavailable": "AI service is temporarily unavailable. Please try again.",
+  "backendUnavailable": "Cannot reach the API server. Start the backend and try again.",
   "fetchFailed": "Failed to load data",
   "policyBlocked": "This action is blocked by workspace policy",
   "notWorkspaceMember": "You are not a member of this workspace",

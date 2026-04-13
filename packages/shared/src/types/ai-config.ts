@@ -45,6 +45,10 @@ export interface AiPromptFunctionDefault {
   promptVersion: string;
   description: { en: string; ko: string };
   variables: string[];
+  /** Default system prompt content (rendered template, for UI preview). */
+  defaultSystemPrompt: string;
+  /** Default user prompt content (rendered template, for UI preview). */
+  defaultUserPrompt: string;
 }
 
 /** Merged view: effective config for a function (DB override + defaults). */
