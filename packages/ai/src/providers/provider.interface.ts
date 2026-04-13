@@ -14,6 +14,9 @@ export interface LLMMessage {
 export interface LLMTokenUsage {
   input: number;
   output: number;
+  total?: number;
+  reasoning?: number;
+  cached?: number;
 }
 
 export interface LLMResponse {
@@ -22,11 +25,21 @@ export interface LLMResponse {
   model: string;
 }
 
+export type LLMReasoningEffort =
+  | 'none'
+  | 'minimal'
+  | 'low'
+  | 'medium'
+  | 'high'
+  | 'xhigh';
+
 export interface LLMCompletionOptions {
   temperature?: number;
   maxTokens?: number;
   /** Optional JSON mode — instructs the model to return valid JSON. */
   jsonMode?: boolean;
+  /** Optional reasoning budget for reasoning-capable models. */
+  reasoningEffort?: LLMReasoningEffort;
 }
 
 export interface LLMProviderConfig {

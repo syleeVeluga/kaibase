@@ -12,6 +12,7 @@ import {
   entities,
   concepts,
   pageTemplates,
+  workspaces,
 } from '@kaibase/db';
 import {
   OpenAIProvider,
@@ -22,11 +23,16 @@ import type {
   CreatePageInput,
   CreatePageSource,
   CreatePageResult,
+  LLMReasoningEffort,
   LLMResponse,
 } from '@kaibase/ai';
 import { PolicyEngine } from '@kaibase/policy';
-import type { PolicyPack, PolicyEvaluationResult } from '@kaibase/shared';
-import { generateId, detectLanguage } from '@kaibase/shared';
+import type { Language, PolicyPack, PolicyEvaluationResult } from '@kaibase/shared';
+import {
+  generateId,
+  detectLanguage,
+  resolveGenerationLanguage,
+} from '@kaibase/shared';
 import { queues } from '../queues.js';
 import pino from 'pino';
 
@@ -46,11 +52,14 @@ function getLLM(): OpenAIProvider {
     }
     llmInstance = new OpenAIProvider({
       apiKey,
-      model: process.env['PAGE_CREATE_MODEL'] ?? 'gpt-4o',
+      model: process.env['PAGE_CREATE_MODEL'] ?? 'gpt-5.4',
     });
   }
   return llmInstance;
 }
+
+const PAGE_CREATE_REASONING_EFFORT =
+  (process.env['PAGE_CREATE_REASONING'] as LLMReasoningEffort | undefined) ?? 'medium';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -103,12 +112,20 @@ function collectCitedSourceIds(blocks: CreatePageResult['blocks']): Set<string> 
 // ---------------------------------------------------------------------------
 
 export async function processPageCreateJob(job: Job): Promise<Record<string, unknown>> {
-    const { sourceIds, workspaceId, pageType, extractedEntityIds, extractedConceptIds } = job.data as {
+    const {
+      sourceIds,
+      workspaceId,
+      pageType,
+      extractedEntityIds,
+      extractedConceptIds,
+      pageLanguage,
+    } = job.data as {
       sourceIds: string[];
       workspaceId: string;
       pageType: string;
       extractedEntityIds?: string[];
       extractedConceptIds?: string[];
+      pageLanguage?: Language;
     };
     logger.info(
       { sourceIds, workspaceId, pageType, jobId: job.id },
@@ -216,7 +233,6 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
     // -----------------------------------------------------------------
     const combinedText = usableSources.map((s) => s.contentText).join('\n\n');
     const detectedLang = detectLanguage(combinedText);
-    const language: 'en' | 'ko' = detectedLang === 'ko' ? 'ko' : 'en';
 
     const createPageSources: CreatePageSource[] = usableSources.map((s) => ({
       sourceId: s.id,
@@ -226,7 +242,7 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
 
     // Fetch extracted entities/concepts and active template in parallel
     let workspaceContext: string | undefined;
-    const [entityRecords, conceptRecords, activeTemplate] = await Promise.all([
+    const [entityRecords, conceptRecords, activeTemplate, workspace] = await Promise.all([
       extractedEntityIds?.length
         ? db
             .select({ name: entities.name, entityType: entities.entityType, description: entities.description })
@@ -246,7 +262,16 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
           eq(pageTemplates.isActive, true),
         ),
       }),
+      db.query.workspaces.findFirst({
+        where: eq(workspaces.id, workspaceId),
+        columns: {
+          defaultLanguage: true,
+        },
+      }),
     ]);
+
+    const language = pageLanguage
+      ?? resolveGenerationLanguage(detectedLang, workspace?.defaultLanguage ?? 'en');
 
     const contextParts: string[] = [];
     if (entityRecords.length > 0) {
@@ -308,7 +333,10 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
 
     const messages = createPagePrompt(promptInput);
     const llm = getLLM();
-    const response: LLMResponse = await llm.complete(messages, { jsonMode: true });
+    const response: LLMResponse = await llm.complete(messages, {
+      jsonMode: true,
+      reasoningEffort: PAGE_CREATE_REASONING_EFFORT,
+    });
 
     const result = JSON.parse(response.content) as CreatePageResult;
 

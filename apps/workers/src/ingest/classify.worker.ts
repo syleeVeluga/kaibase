@@ -1,14 +1,19 @@
 import type { Job } from 'bullmq';
 import { eq, and } from 'drizzle-orm';
 import { db } from '@kaibase/db';
-import { sources, activityEvents } from '@kaibase/db';
+import { sources, activityEvents, workspaces } from '@kaibase/db';
 import {
   OpenAIProvider,
   classifySourcePrompt,
   CLASSIFY_PROMPT_VERSION,
 } from '@kaibase/ai';
-import type { ClassifySourceInput, ClassifySourceResult } from '@kaibase/ai';
+import type {
+  ClassifySourceInput,
+  ClassifySourceResult,
+  LLMReasoningEffort,
+} from '@kaibase/ai';
 import { queues } from '../queues.js';
+import { detectLanguage, resolveGenerationLanguage } from '@kaibase/shared';
 import pino from 'pino';
 
 const logger = pino({ name: 'classify-worker' });
@@ -27,11 +32,14 @@ function getLLM(): OpenAIProvider {
     }
     llmInstance = new OpenAIProvider({
       apiKey,
-      model: process.env['CLASSIFY_MODEL'] ?? 'gpt-4o-mini',
+      model: process.env['CLASSIFY_MODEL'] ?? 'gpt-5.4-mini',
     });
   }
   return llmInstance;
 }
+
+const CLASSIFY_REASONING_EFFORT =
+  (process.env['CLASSIFY_REASONING'] as LLMReasoningEffort | undefined) ?? 'low';
 
 export async function processClassifyJob(job: Job): Promise<{ sourceId: string; classified: boolean; classification?: ClassifySourceResult; reason?: string }> {
     const { sourceId, workspaceId } = job.data as {
@@ -57,19 +65,33 @@ export async function processClassifyJob(job: Job): Promise<{ sourceId: string; 
       return { sourceId, classified: false, reason: 'no_content' };
     }
 
+    const workspace = await db.query.workspaces.findFirst({
+      where: eq(workspaces.id, workspaceId),
+      columns: {
+        defaultLanguage: true,
+      },
+    });
+
     // ---------------------------------------------------------------
     // 2. Call LLM with classify prompt (fast model tier)
     // ---------------------------------------------------------------
+    const detectedLanguage = detectLanguage(source.contentText);
     const promptInput: ClassifySourceInput = {
       sourceText: source.contentText,
       sourceTitle: source.title ?? undefined,
       sourceTypeHint: source.sourceType,
-      language: (process.env['WORKSPACE_LANGUAGE'] as 'en' | 'ko') ?? 'en',
+      language: resolveGenerationLanguage(
+        detectedLanguage,
+        workspace?.defaultLanguage ?? 'en',
+      ),
     };
 
     const messages = classifySourcePrompt(promptInput);
     const llm = getLLM();
-    const response = await llm.complete(messages, { jsonMode: true });
+    const response = await llm.complete(messages, {
+      jsonMode: true,
+      reasoningEffort: CLASSIFY_REASONING_EFFORT,
+    });
 
     const classification = JSON.parse(response.content) as ClassifySourceResult;
 

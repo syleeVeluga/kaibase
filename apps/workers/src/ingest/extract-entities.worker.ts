@@ -2,14 +2,19 @@ import type { Job } from 'bullmq';
 import { eq, and, desc, sql } from 'drizzle-orm';
 import { queues } from '../queues.js';
 import { db } from '@kaibase/db';
-import { sources, entities, concepts, activityEvents } from '@kaibase/db';
+import { sources, entities, concepts, activityEvents, workspaces } from '@kaibase/db';
 import {
   OpenAIProvider,
   extractEntitiesPrompt,
   EXTRACT_ENTITIES_PROMPT_VERSION,
 } from '@kaibase/ai';
-import type { ExtractEntitiesResult, ExtractedEntity, ExtractedConcept } from '@kaibase/ai';
-import { detectLanguage } from '@kaibase/shared';
+import type {
+  ExtractEntitiesResult,
+  ExtractedEntity,
+  ExtractedConcept,
+  LLMReasoningEffort,
+} from '@kaibase/ai';
+import { detectLanguage, resolveGenerationLanguage } from '@kaibase/shared';
 import type { EntityType } from '@kaibase/shared';
 import pino from 'pino';
 
@@ -22,11 +27,14 @@ function getLLM(): OpenAIProvider {
   if (!llm) {
     llm = new OpenAIProvider({
       apiKey: process.env['OPENAI_API_KEY'] ?? '',
-      model: process.env['EXTRACT_ENTITIES_MODEL'] ?? 'gpt-4o-mini',
+      model: process.env['EXTRACT_ENTITIES_MODEL'] ?? 'gpt-5.4-mini',
     });
   }
   return llm;
 }
+
+const EXTRACT_ENTITIES_REASONING_EFFORT =
+  (process.env['EXTRACT_ENTITIES_REASONING'] as LLMReasoningEffort | undefined) ?? 'low';
 
 /** Maximum character length of source text sent to the LLM. */
 const MAX_SOURCE_CHARS = 100_000;
@@ -172,9 +180,19 @@ export async function processExtractEntitiesJob(job: Job): Promise<{ sourceId: s
       aliases: (e.aliases ?? []) as string[],
     }));
 
+    const workspace = await db.query.workspaces.findFirst({
+      where: eq(workspaces.id, workspaceId),
+      columns: {
+        defaultLanguage: true,
+      },
+    });
+
     // 3. Detect language and build prompt
     const detectedLang = detectLanguage(contentText);
-    const language: 'en' | 'ko' = detectedLang === 'ko' ? 'ko' : 'en';
+    const language = resolveGenerationLanguage(
+      detectedLang,
+      workspace?.defaultLanguage ?? 'en',
+    );
 
     const truncatedText =
       contentText.length > MAX_SOURCE_CHARS
@@ -190,7 +208,10 @@ export async function processExtractEntitiesJob(job: Job): Promise<{ sourceId: s
 
     // 4. Call LLM
     const provider = getLLM();
-    const response = await provider.complete(messages, { jsonMode: true });
+    const response = await provider.complete(messages, {
+      jsonMode: true,
+      reasoningEffort: EXTRACT_ENTITIES_REASONING_EFFORT,
+    });
 
     logger.info(
       {

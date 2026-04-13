@@ -2,6 +2,7 @@ export type {
   LLMMessage,
   LLMTokenUsage,
   LLMResponse,
+  LLMReasoningEffort,
   LLMCompletionOptions,
   LLMProviderConfig,
   LLMProvider,

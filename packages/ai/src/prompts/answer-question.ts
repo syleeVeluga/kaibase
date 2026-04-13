@@ -114,6 +114,7 @@ Answer language: ${languageLabel} (match the question's language)
 
 Answer guidelines:
 - Answer the question using ONLY information from the provided canonical pages and raw sources.
+- Write the answer entirely in ${languageLabel}.
 - Every factual claim MUST have at least one citation. Use numbered markers like [1], [2] in the answer text.
 - If the context does not contain enough information to answer, state this clearly rather than making up information.
 - Prefer information from canonical pages over raw sources.

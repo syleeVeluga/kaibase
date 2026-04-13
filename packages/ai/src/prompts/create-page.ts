@@ -127,7 +127,10 @@ Page creation guidelines:
 - Use clear headings to organize content logically.
 - Prefer structured formats (lists, tables) for comparisons and enumerations.
 - Write in a neutral, informative tone appropriate for a team knowledge base.
-- Generate both an English title and a Korean title (titleKo) when possible.
+- Write all visible prose fields entirely in ${languageLabel}. This includes title, titleKo when populated, summary, reasoning, paragraph content, list items, headings, quotes, and table cells.
+- Do not switch languages mid-page unless a quoted source requires it.
+- If Content language is Korean, set both "title" and "titleKo" to natural Korean titles.
+- If Content language is English, set "title" in English and set "titleKo" to a Korean translation when you can do so confidently; otherwise use null.
 - Include a brief summary suitable for preview cards and search results.
 - Provide reasoning about why you structured the page this way.${templateInstructions}${customInstructions}${workspaceCtx}
 

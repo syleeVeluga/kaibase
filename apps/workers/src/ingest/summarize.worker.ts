@@ -1,14 +1,14 @@
 import type { Job } from 'bullmq';
 import { eq, and } from 'drizzle-orm';
 import { db } from '@kaibase/db';
-import { sources, activityEvents } from '@kaibase/db';
+import { sources, activityEvents, workspaces } from '@kaibase/db';
 import {
   OpenAIProvider,
   summarizeSourcePrompt,
   SUMMARIZE_PROMPT_VERSION,
 } from '@kaibase/ai';
-import type { SummarizeSourceResult } from '@kaibase/ai';
-import { detectLanguage } from '@kaibase/shared';
+import type { LLMReasoningEffort, SummarizeSourceResult } from '@kaibase/ai';
+import { detectLanguage, resolveGenerationLanguage } from '@kaibase/shared';
 import pino from 'pino';
 
 const logger = pino({ name: 'summarize-worker' });
@@ -20,10 +20,14 @@ function getLLM(): OpenAIProvider {
   if (!llm) {
     llm = new OpenAIProvider({
       apiKey: process.env['OPENAI_API_KEY'] ?? '',
+      model: process.env['SUMMARIZE_MODEL'] ?? 'gpt-5.4',
     });
   }
   return llm;
 }
+
+const SUMMARIZE_REASONING_EFFORT =
+  (process.env['SUMMARIZE_REASONING'] as LLMReasoningEffort | undefined) ?? 'medium';
 
 /** Maximum character length of source text sent to the LLM. */
 const MAX_SOURCE_CHARS = 100_000;
@@ -59,9 +63,19 @@ export async function processSummarizeJob(job: Job): Promise<{ sourceId: string;
       return { sourceId, summarized: false, reason: 'empty_content' };
     }
 
-    // 2. Detect language, map 'mixed' to 'en' for prompt compatibility
+    const workspace = await db.query.workspaces.findFirst({
+      where: eq(workspaces.id, workspaceId),
+      columns: {
+        defaultLanguage: true,
+      },
+    });
+
+    // 2. Detect language, fallback to workspace default for mixed input
     const detectedLang = detectLanguage(contentText);
-    const language: 'en' | 'ko' = detectedLang === 'ko' ? 'ko' : 'en';
+    const language = resolveGenerationLanguage(
+      detectedLang,
+      workspace?.defaultLanguage ?? 'en',
+    );
 
     // Truncate very long sources to stay within model context window
     const truncatedText =
@@ -77,7 +91,10 @@ export async function processSummarizeJob(job: Job): Promise<{ sourceId: string;
     });
 
     const provider = getLLM();
-    const response = await provider.complete(messages, { jsonMode: true });
+    const response = await provider.complete(messages, {
+      jsonMode: true,
+      reasoningEffort: SUMMARIZE_REASONING_EFFORT,
+    });
 
     logger.info(
       {

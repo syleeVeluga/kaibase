@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { askQuestionSchema, promoteAnswerSchema, generateId, type PolicyPack } from '@kaibase/shared';
+import { detectLanguage, resolveGenerationLanguage } from '@kaibase/shared';
 import { authMiddleware } from '../middleware/auth.js';
 import { workspaceMiddleware } from '../middleware/workspace.js';
 import { AppError } from '../middleware/error-handler.js';
@@ -11,12 +12,14 @@ import {
   compilationTraces,
   collections,
   policyPacks,
+  workspaces,
 } from '@kaibase/db/schema';
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import {
   answerQuestionPrompt,
   type AnswerQuestionResult,
   type AnswerContextPage,
+  type LLMReasoningEffort,
 } from '@kaibase/ai';
 import { PolicyEngine } from '@kaibase/policy';
 import { getEmbeddingProvider, getQALLM as getLLM } from '../providers.js';
@@ -25,6 +28,9 @@ import { logger } from '../logger.js';
 import type { AppEnv } from '../types.js';
 
 export const qaRoutes = new Hono<AppEnv>();
+
+const QA_REASONING_EFFORT =
+  (process.env['QA_REASONING'] as LLMReasoningEffort | undefined) ?? 'medium';
 
 qaRoutes.use('*', authMiddleware());
 qaRoutes.use('*', workspaceMiddleware());
@@ -100,6 +106,7 @@ qaRoutes.post('/ask', zValidator('json', askQuestionSchema), async (c) => {
       jsonMode: true,
       temperature: 0.3,
       maxTokens: 2000,
+      reasoningEffort: QA_REASONING_EFFORT,
     });
   } catch (err) {
     logger.error({ err }, 'LLM call failed');
@@ -277,11 +284,26 @@ qaRoutes.post(
 
     const collectionId = input.collectionId ?? briefsRows[0]?.id ?? null;
 
+    const workspace = await db.query.workspaces.findFirst({
+      where: eq(workspaces.id, workspaceId),
+      columns: {
+        defaultLanguage: true,
+      },
+    });
+
     // 5. Create page in a transaction
     const pageId = generateId();
     const title = input.title ?? detail.question;
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 100);
     const traceId = generateId();
+    const detectedPageLanguage = detectLanguage(
+      `${title}\n${detail.answer ?? ''}`,
+    );
+    const pageLanguage = input.language
+      ?? resolveGenerationLanguage(
+        detectedPageLanguage,
+        workspace?.defaultLanguage ?? 'en',
+      );
 
     // Build content blocks from answer
     const contentBlocks = [
@@ -302,7 +324,7 @@ qaRoutes.post(
         createdByUserId: user.userId,
         collectionId,
         compilationTraceId: traceId,
-        language: 'en',
+        language: pageLanguage,
         publishedAt: pageStatus === 'published' ? new Date() : null,
       });
 

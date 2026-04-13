@@ -11,6 +11,7 @@ export const promoteAnswerSchema = z.object({
   pageType: pageTypeSchema.default('answer'),
   collectionId: z.string().uuid().optional(),
   title: z.string().min(1).max(500).optional(),
+  language: z.enum(['en', 'ko']).optional(),
 });
 
 export type AskQuestionInput = z.infer<typeof askQuestionSchema>;

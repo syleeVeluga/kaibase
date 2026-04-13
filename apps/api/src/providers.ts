@@ -16,7 +16,7 @@ export function getQALLM(): OpenAIProvider {
   if (!qaLlmProvider) {
     qaLlmProvider = new OpenAIProvider({
       apiKey: process.env['OPENAI_API_KEY'] ?? '',
-      model: process.env['QA_MODEL'] ?? 'gpt-4o',
+      model: process.env['QA_MODEL'] ?? 'gpt-5.4',
     });
   }
   return qaLlmProvider;
