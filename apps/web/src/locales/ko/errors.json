@@ -21,6 +21,7 @@
   "notWorkspaceMember": "이 워크스페이스의 멤버가 아닙니다",
   "missingFile": "업로드할 파일을 선택해 주세요",
   "fileTooLarge": "파일이 너무 큽니다 (최대 100 MB)",
+  "sourceFilenameConflict": "같은 파일명을 가진 소스가 이미 존재합니다",
   "unsupportedConnector": "이 커넥터 유형은 아직 지원되지 않습니다",
   "invalidConnectorConfig": "커넥터 설정이 올바르지 않습니다"
 }

@@ -52,5 +52,11 @@
     "processing": "처리 중",
     "processed": "처리됨",
     "failed": "실패"
+  },
+  "sourcesUpload": {
+    "fileUploaded": "파일 업로드가 완료되었습니다.",
+    "fileReplaced": "기존 소스를 업데이트했고 재처리를 시작했습니다.",
+    "fileDeduplicated": "이미 알려진 파일이어서 기존 소스를 재사용했습니다.",
+    "filenameConflictPrompt": "{{filename}} 이름의 소스가 이미 있습니다. 교체하면 해당 소스를 다시 처리하고 지식 페이지를 재생성합니다. 계속할까요?"
   }
 }

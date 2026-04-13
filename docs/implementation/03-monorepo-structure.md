@@ -1,6 +1,20 @@
 # Monorepo Structure — Kaibase
 
-> Last Updated: 2026-04-11
+> Last Updated: 2026-04-13
+
+---
+
+## Local Development Startup
+
+Use `corepack yarn` for local commands in this repo.
+
+- `corepack yarn docker:up` starts PostgreSQL, Redis, and MinIO.
+- `corepack yarn dev` starts the full local stack: web, API, and workers.
+- `corepack yarn dev:web` starts only the Vite frontend.
+- `corepack yarn dev:api` starts only the Hono API server.
+- `corepack yarn dev:workers` starts only the BullMQ workers.
+
+For source uploads, page compilation, and review generation to progress beyond `pending`, the workers process must be running.
 
 ---
 

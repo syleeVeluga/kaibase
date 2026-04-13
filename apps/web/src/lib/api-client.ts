@@ -103,7 +103,10 @@ export class ApiClient {
   post<T>(path: string, body?: unknown): Promise<T> {
     return this.request<T>(path, {
       method: 'POST',
-      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
+      body:
+        body instanceof FormData
+          ? body
+          : JSON.stringify(body ?? {}),
     });
   }
 

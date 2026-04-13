@@ -74,6 +74,10 @@ function isReasoningModel(model: string): boolean {
   return /^(gpt-5|o[1-9])/.test(model);
 }
 
+function supportsTemperature(model: string): boolean {
+  return !isReasoningModel(model);
+}
+
 function extractResponseText(response: OpenAIResponsesResponse): string {
   if (typeof response.output_text === 'string' && response.output_text.trim().length > 0) {
     return response.output_text;
@@ -127,7 +131,7 @@ export class OpenAIProvider implements LLMProvider {
         })),
       };
 
-      if (options?.temperature !== undefined) {
+      if (options?.temperature !== undefined && supportsTemperature(this.model)) {
         requestBody.temperature = options.temperature;
       }
 

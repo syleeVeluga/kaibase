@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import type { FormEvent, DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../../lib/api-client.js';
+import { ApiError, apiClient } from '../../lib/api-client.js';
 import { useWorkspace } from '../../lib/workspace-context.js';
 import { StatusBadge } from '../../components/StatusBadge.js';
 import * as shared from '../../theme/shared.css.js';
@@ -27,6 +27,20 @@ interface Connector {
   fileCount: number | null;
   lastSyncedAt: string | null;
   config: Record<string, unknown>;
+}
+
+interface UploadResponse {
+  id: string;
+  deduplicated?: boolean;
+  replaced?: boolean;
+  retried?: boolean;
+  cancelled?: boolean;
+}
+
+interface FilenameConflictErrorDetails {
+  existingSource?: {
+    id?: string;
+  };
 }
 
 export function SourcesPage(): React.ReactElement {
@@ -124,6 +138,7 @@ function SourceList({ workspaceId }: { workspaceId: string }): React.ReactElemen
 /* ---------- Upload / Add Source Panel ---------- */
 
 function UploadPanel({ workspaceId }: { workspaceId: string }): React.ReactElement {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -131,16 +146,65 @@ function UploadPanel({ workspaceId }: { workspaceId: string }): React.ReactEleme
 
   // File upload
   const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      return apiClient.upload<{ id: string }>(
-        `/workspaces/${workspaceId}/sources/upload`,
-        formData,
-      );
+    mutationFn: async (file: File): Promise<UploadResponse> => {
+      const buildFormData = (replaceSourceId?: string): FormData => {
+        const formData = new FormData();
+        formData.append('file', file);
+        if (replaceSourceId) {
+          formData.append('replaceExisting', 'true');
+          formData.append('replaceSourceId', replaceSourceId);
+        }
+        return formData;
+      };
+
+      try {
+        return await apiClient.upload<UploadResponse>(
+          `/workspaces/${workspaceId}/sources/upload`,
+          buildFormData(),
+        );
+      } catch (err) {
+        if (!(err instanceof ApiError)) {
+          throw err;
+        }
+
+        const details = err.body.details as FilenameConflictErrorDetails | undefined;
+        const existingSourceId = details?.existingSource?.id;
+
+        if (
+          err.status === 409
+          && err.body.code === 'SOURCE_FILENAME_CONFLICT'
+          && existingSourceId
+        ) {
+          const confirmed = window.confirm(
+            t('sourcesUpload.filenameConflictPrompt', { filename: file.name }),
+          );
+
+          if (!confirmed) {
+            return { id: '', cancelled: true };
+          }
+
+          return apiClient.upload<UploadResponse>(
+            `/workspaces/${workspaceId}/sources/upload`,
+            buildFormData(existingSourceId),
+          );
+        }
+
+        throw err;
+      }
     },
     onSuccess: (data) => {
-      setSuccess(data.id ? 'File uploaded successfully!' : '');
+      if (data.cancelled) {
+        return;
+      }
+
+      if (data.replaced) {
+        setSuccess(t('sourcesUpload.fileReplaced'));
+      } else if (data.deduplicated) {
+        setSuccess(t('sourcesUpload.fileDeduplicated'));
+      } else {
+        setSuccess(data.id ? t('sourcesUpload.fileUploaded') : '');
+      }
+
       void queryClient.invalidateQueries({ queryKey: ['sources', workspaceId] });
     },
   });

@@ -6,7 +6,7 @@ import { workspaceMiddleware } from '../middleware/workspace.js';
 import { AppError } from '../middleware/error-handler.js';
 import { db } from '@kaibase/db/client';
 import { sources, sourceAttachments, activityEvents } from '@kaibase/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { findOne } from '../route-helpers.js';
 import { ingestQueue } from '../queues.js';
 import { logger } from '../logger.js';
@@ -16,6 +16,114 @@ export const sourceRoutes = new Hono<AppEnv>();
 
 sourceRoutes.use('*', authMiddleware());
 sourceRoutes.use('*', workspaceMiddleware());
+
+function buildUploadRawMetadata(file: File, rawFileContent: string): Record<string, unknown> {
+  return {
+    filename: file.name,
+    mimeType: file.type,
+    sizeBytes: file.size,
+    fileContent: rawFileContent,
+  };
+}
+
+function resolveUploadTitle(params: {
+  requestedTitle: unknown;
+  existingTitle?: string | null;
+  filename: string;
+}): string {
+  if (typeof params.requestedTitle === 'string' && params.requestedTitle.trim().length > 0) {
+    return params.requestedTitle;
+  }
+
+  return params.existingTitle ?? params.filename;
+}
+
+async function enqueueFileParseJob(params: {
+  sourceId: string;
+  workspaceId: string;
+  file: File;
+  rawFileContent: string;
+}): Promise<void> {
+  await ingestQueue.add('parse', {
+    sourceId: params.sourceId,
+    workspaceId: params.workspaceId,
+    filename: params.file.name,
+    mimeType: params.file.type,
+    rawFileContent: params.rawFileContent,
+  });
+}
+
+async function prepareUploadedSourceForReingest(params: {
+  sourceId: string;
+  workspaceId: string;
+  userId: string;
+  file: File;
+  title: string;
+  contentHash: string;
+  rawFileContent: string;
+  activityDetail: Record<string, unknown>;
+}): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx
+      .update(sources)
+      .set({
+        title: params.title,
+        contentHash: params.contentHash,
+        rawMetadata: buildUploadRawMetadata(params.file, params.rawFileContent),
+        ingestedBy: params.userId,
+        ingestedAt: new Date(),
+        contentText: null,
+        status: 'pending',
+        version: sql`${sources.version} + 1`,
+      })
+      .where(
+        and(
+          eq(sources.id, params.sourceId),
+          eq(sources.workspaceId, params.workspaceId),
+        ),
+      );
+
+    const existingAttachment = await tx
+      .select({ id: sourceAttachments.id })
+      .from(sourceAttachments)
+      .where(eq(sourceAttachments.sourceId, params.sourceId))
+      .limit(1);
+
+    if (existingAttachment[0]) {
+      await tx
+        .update(sourceAttachments)
+        .set({
+          filename: params.file.name,
+          mimeType: params.file.type,
+          sizeBytes: params.file.size,
+          storageKey: `uploads/${params.workspaceId}/${params.sourceId}/${params.file.name}`,
+          contentText: null,
+        })
+        .where(eq(sourceAttachments.sourceId, params.sourceId));
+    } else {
+      await tx.insert(sourceAttachments).values({
+        id: generateId(),
+        sourceId: params.sourceId,
+        filename: params.file.name,
+        mimeType: params.file.type,
+        sizeBytes: params.file.size,
+        storageKey: `uploads/${params.workspaceId}/${params.sourceId}/${params.file.name}`,
+        contentText: null,
+      });
+    }
+
+    await tx.insert(activityEvents).values({
+      id: generateId(),
+      workspaceId: params.workspaceId,
+      eventType: 'ingest',
+      actorType: 'user',
+      actorId: params.userId,
+      targetType: 'source',
+      targetId: params.sourceId,
+      detail: params.activityDetail,
+    });
+  });
+}
 
 // List sources
 sourceRoutes.get('/', async (c) => {
@@ -69,11 +177,17 @@ sourceRoutes.post('/upload', async (c) => {
 
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
+  const rawFileContent = buffer.toString('base64');
   const contentHash = await sha256(arrayBuffer);
+  const requestedTitle = body['title'];
+  const title = resolveUploadTitle({ requestedTitle, filename: file.name });
+  const replaceExisting = body['replaceExisting'] === 'true';
+  const replaceSourceId =
+    typeof body['replaceSourceId'] === 'string' ? body['replaceSourceId'] : null;
 
   // Check for duplicate
   const existing = await db
-    .select({ id: sources.id, status: sources.status })
+    .select({ id: sources.id, status: sources.status, title: sources.title })
     .from(sources)
     .where(
       and(
@@ -86,52 +200,31 @@ sourceRoutes.post('/upload', async (c) => {
   const existingMatch = existing[0];
   if (existingMatch) {
     if (existingMatch.status === 'failed') {
-      await db.transaction(async (tx) => {
-        await tx
-          .update(sources)
-          .set({
-            title: (body['title'] as string) || file.name,
-            rawMetadata: {
-              filename: file.name,
-              mimeType: file.type,
-              sizeBytes: file.size,
-              fileContent: buffer.toString('base64'),
-            },
-            ingestedBy: user.userId,
-            ingestedAt: new Date(),
-            contentText: null,
-            status: 'pending',
-          })
-          .where(
-            and(
-              eq(sources.id, existingMatch.id),
-              eq(sources.workspaceId, workspaceId),
-            ),
-          );
-
-        await tx.insert(activityEvents).values({
-          id: generateId(),
-          workspaceId,
-          eventType: 'ingest',
-          actorType: 'user',
-          actorId: user.userId,
-          targetType: 'source',
-          targetId: existingMatch.id,
-          detail: {
-            channel: 'web',
-            sourceType: 'file_upload',
-            filename: file.name,
-            retried: true,
-          },
-        });
-      });
-
-      await ingestQueue.add('parse', {
+      await prepareUploadedSourceForReingest({
         sourceId: existingMatch.id,
         workspaceId,
-        filename: file.name,
-        mimeType: file.type,
-        rawFileContent: buffer.toString('base64'),
+        userId: user.userId,
+        file,
+        title: resolveUploadTitle({
+          requestedTitle,
+          existingTitle: existingMatch.title,
+          filename: file.name,
+        }),
+        contentHash,
+        rawFileContent,
+        activityDetail: {
+          channel: 'web',
+          sourceType: 'file_upload',
+          filename: file.name,
+          retried: true,
+        },
+      });
+
+      await enqueueFileParseJob({
+        sourceId: existingMatch.id,
+        workspaceId,
+        file,
+        rawFileContent,
       });
 
       logger.info(
@@ -148,9 +241,79 @@ sourceRoutes.post('/upload', async (c) => {
     );
   }
 
+  const filenameMatches = await db
+    .select({
+      id: sources.id,
+      title: sources.title,
+      status: sources.status,
+      version: sources.version,
+      ingestedAt: sources.ingestedAt,
+    })
+    .from(sources)
+    .where(
+      and(
+        eq(sources.workspaceId, workspaceId),
+        eq(sources.sourceType, 'file_upload'),
+        sql<boolean>`coalesce(${sources.rawMetadata} ->> 'filename', ${sources.title}) = ${file.name}`,
+      ),
+    )
+    .orderBy(desc(sources.ingestedAt))
+    .limit(10);
+
+  const filenameConflict =
+    filenameMatches.find((match) => match.status !== 'failed') ??
+    filenameMatches[0];
+
+  if (filenameConflict) {
+    if (!replaceExisting || replaceSourceId !== filenameConflict.id) {
+      throw new AppError(409, 'SOURCE_FILENAME_CONFLICT', 'errors.sourceFilenameConflict', {
+        existingSource: {
+          id: filenameConflict.id,
+          title: filenameConflict.title,
+          status: filenameConflict.status,
+          version: filenameConflict.version,
+          ingestedAt: filenameConflict.ingestedAt,
+        },
+      });
+    }
+
+    await prepareUploadedSourceForReingest({
+      sourceId: filenameConflict.id,
+      workspaceId,
+      userId: user.userId,
+      file,
+      title: resolveUploadTitle({
+        requestedTitle,
+        existingTitle: filenameConflict.title,
+        filename: file.name,
+      }),
+      contentHash,
+      rawFileContent,
+      activityDetail: {
+        channel: 'web',
+        sourceType: 'file_upload',
+        filename: file.name,
+        replaced: true,
+      },
+    });
+
+    await enqueueFileParseJob({
+      sourceId: filenameConflict.id,
+      workspaceId,
+      file,
+      rawFileContent,
+    });
+
+    logger.info(
+      { sourceId: filenameConflict.id, filename: file.name },
+      'Existing uploaded source replaced and re-enqueued for parsing',
+    );
+
+    return c.json({ id: filenameConflict.id, replaced: true }, 202);
+  }
+
   const sourceId = generateId();
   const attachmentId = generateId();
-  const title = (body['title'] as string) || file.name;
 
   await db.transaction(async (tx) => {
     await tx.insert(sources).values({
@@ -162,12 +325,7 @@ sourceRoutes.post('/upload', async (c) => {
       contentHash,
       // Store file content as base64 in rawMetadata for the parse worker to use.
       // In production, this would go to MinIO/S3.
-      rawMetadata: {
-        filename: file.name,
-        mimeType: file.type,
-        sizeBytes: file.size,
-        fileContent: buffer.toString('base64'),
-      },
+      rawMetadata: buildUploadRawMetadata(file, rawFileContent),
       ingestedBy: user.userId,
       status: 'pending',
     });
@@ -195,13 +353,7 @@ sourceRoutes.post('/upload', async (c) => {
   });
 
   // Enqueue parse job
-  await ingestQueue.add('parse', {
-    sourceId,
-    workspaceId,
-    filename: file.name,
-    mimeType: file.type,
-    rawFileContent: buffer.toString('base64'),
-  });
+  await enqueueFileParseJob({ sourceId, workspaceId, file, rawFileContent });
 
   logger.info({ sourceId, filename: file.name }, 'File upload enqueued for parsing');
 

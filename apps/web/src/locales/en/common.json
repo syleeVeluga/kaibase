@@ -52,5 +52,11 @@
     "processing": "Processing",
     "processed": "Processed",
     "failed": "Failed"
+  },
+  "sourcesUpload": {
+    "fileUploaded": "File uploaded successfully!",
+    "fileReplaced": "Existing source updated. Reprocessing has started.",
+    "fileDeduplicated": "This file is already known, so the existing source was reused.",
+    "filenameConflictPrompt": "A source named {{filename}} already exists. Replacing it will reprocess that source and regenerate its knowledge page. Continue?"
   }
 }

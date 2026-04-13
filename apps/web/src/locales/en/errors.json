@@ -21,6 +21,7 @@
   "notWorkspaceMember": "You are not a member of this workspace",
   "missingFile": "Please select a file to upload",
   "fileTooLarge": "File is too large (max 100 MB)",
+  "sourceFilenameConflict": "A source with this filename already exists",
   "unsupportedConnector": "This connector type is not yet supported",
   "invalidConnectorConfig": "Connector configuration is invalid"
 }
