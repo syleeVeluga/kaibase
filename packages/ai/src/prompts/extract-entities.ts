@@ -185,7 +185,7 @@ CONCEPT EXTRACTION RULES:
 TASK 3: Extract Relation Triples
 ──────────────────────────────────────────
 
-Relations capture factual connections between entities and concepts as (subject, predicate, object) triples.
+Extract source-local relation triples — factual connections between entities and concepts as (subject, predicate, object) triples.
 
 • subject / object — Each has:
   - text: The entity or concept name as it appears in the source.
