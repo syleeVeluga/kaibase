@@ -2,8 +2,13 @@ import { createGlobalTheme } from '@vanilla-extract/css';
 
 export const vars = createGlobalTheme(':root', {
   color: {
-    primary: '#2563eb',
-    primaryHover: '#1d4ed8',
+    primary: '#56735b',
+    primaryHover: '#49624d',
+    selection: '#dde9dd',
+    selectionHover: '#d2e1d2',
+    selectionBorder: '#a9bea9',
+    selectionText: '#45604a',
+    selectionSurface: '#edf4ed',
     secondary: '#64748b',
     background: '#ffffff',
     surface: '#f8fafc',
@@ -15,7 +20,7 @@ export const vars = createGlobalTheme(':root', {
     success: '#16a34a',
     warning: '#d97706',
     error: '#dc2626',
-    info: '#2563eb',
+    info: '#56735b',
   },
   space: {
     xs: '4px',

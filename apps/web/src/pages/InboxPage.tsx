@@ -16,6 +16,10 @@ interface Source {
   ingestedAt: string;
 }
 
+function hasActiveSources(sources: Source[] | undefined): boolean {
+  return sources?.some((s) => s.status === 'pending' || s.status === 'processing') ?? false;
+}
+
 interface Page {
   id: string;
   title: string;
@@ -35,12 +39,19 @@ export function InboxPage(): React.ReactElement {
     queryKey: ['sources', wid],
     queryFn: () => apiClient.get<{ sources: Source[] }>(`/workspaces/${wid}/sources`),
     enabled: !!wid,
+    refetchInterval: (query) =>
+      hasActiveSources(query.state.data?.sources) ? 3000 : false,
   });
 
   const pagesQuery = useQuery({
     queryKey: ['pages', wid],
     queryFn: () => apiClient.get<{ pages: Page[] }>(`/workspaces/${wid}/pages`),
     enabled: !!wid,
+    refetchInterval: (query) => {
+      if (hasActiveSources(sourcesQuery.data?.sources)) return 5000;
+      const pages = query.state.data?.pages;
+      return sourcesQuery.data?.sources?.length && pages?.length === 0 ? 5000 : false;
+    },
   });
 
   const deleteSource = useMutation({

@@ -31,6 +31,10 @@ export function ReviewsPage(): React.ReactElement {
     queryFn: () =>
       apiClient.get<{ reviews: ReviewTask[] }>(`/workspaces/${wid}/reviews`),
     enabled: !!wid,
+    refetchInterval: (query) => {
+      const reviews = query.state.data?.reviews;
+      return !reviews || reviews.some((r) => r.status === 'pending') ? 5000 : false;
+    },
   });
 
   const approveMutation = useMutation({

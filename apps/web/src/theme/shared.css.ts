@@ -30,8 +30,8 @@ export const badgePending = style([badge, {
 }]);
 
 export const badgeProcessing = style([badge, {
-  backgroundColor: '#dbeafe',
-  color: '#1e40af',
+  backgroundColor: '#e4efe4',
+  color: '#4e6a52',
 }]);
 
 export const badgeProcessed = style([badge, {

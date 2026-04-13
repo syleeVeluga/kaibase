@@ -9,7 +9,8 @@ import {
 import { authMiddleware } from '../middleware/auth.js';
 import { AppError } from '../middleware/error-handler.js';
 import { db } from '@kaibase/db/client';
-import { workspaces, workspaceMembers, policyPacks } from '@kaibase/db/schema';
+import { workspaces, workspaceMembers, policyPacks, collections } from '@kaibase/db/schema';
+import { DEFAULT_COLLECTIONS } from '@kaibase/db';
 import { eq } from 'drizzle-orm';
 import { getDefaultPolicyPack } from '@kaibase/policy';
 import type { AppEnv } from '../types.js';
@@ -54,6 +55,10 @@ workspaceRoutes.post('/', zValidator('json', createWorkspaceSchema), async (c) =
       defaultOutcome: defaultPack.defaultOutcome,
       createdBy: user.userId,
     });
+
+    await tx.insert(collections).values(
+      DEFAULT_COLLECTIONS.map((c) => ({ workspaceId: id, ...c })),
+    );
   });
 
   return c.json({ id, ...input, defaultLanguage }, 201);

@@ -284,7 +284,7 @@ kaibase/
 │   │   │   │   └── index.ts
 │   │   │   │
 │   │   │   ├── migrations/           # Drizzle migration files
-│   │   │   ├── seed.ts               # Seed data (default collections, policies)
+│   │   │   ├── seed.ts               # Backfill script for existing workspaces (collections auto-seeded at workspace creation)
 │   │   │   └── client.ts             # Database connection setup
 │   │   │
 │   │   ├── drizzle.config.ts

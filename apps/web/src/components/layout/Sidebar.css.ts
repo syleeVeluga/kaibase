@@ -53,11 +53,12 @@ export const navLink = style({
 export const navLinkActive = style([
   navLink,
   {
-    backgroundColor: vars.color.primary,
-    color: '#ffffff',
+    backgroundColor: vars.color.selection,
+    color: vars.color.selectionText,
+    boxShadow: `inset 0 0 0 1px ${vars.color.selectionBorder}`,
     ':hover': {
-      backgroundColor: vars.color.primaryHover,
-      color: '#ffffff',
+      backgroundColor: vars.color.selectionHover,
+      color: vars.color.selectionText,
     },
   },
 ]);

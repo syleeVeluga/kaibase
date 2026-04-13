@@ -66,6 +66,8 @@
 - Markdown web upload now works end-to-end for the Phase 0 fallback path: `POST /sources/upload` stores the source, enqueues parse, extracts `content_text`, and advances the source to `processed` before downstream classification.
 - The workers runtime now uses one dispatcher worker per BullMQ queue (`ai-ingest`, `ai-page-compile`) so jobs are routed by `job.name` instead of being silently consumed by the wrong worker on a shared queue.
 - Focused regression coverage now exists for the markdown upload contract in the API route and for uploaded file materialization in the parse worker.
+- **Default collections (Inbox, Projects, Entities, Concepts, Briefs, Review Queue, Knowledge Index, Activity Log) are now auto-seeded inside the workspace creation transaction** — no separate `yarn db:seed` step required for new workspaces. `DEFAULT_COLLECTIONS` is the single canonical definition in `packages/db/src/collections.ts`; `seed.ts` now imports it and remains available for backfilling existing workspaces.
+- Inbox and Sources pages now poll for source-status updates (3 s while any source is `pending`/`processing`) and page creation (5 s while sources are active or pages list is empty). Reviews page polls while any review is `pending`. This replaces the previous manual-refresh-only approach.
 - Still pending for broader Source Vault completeness: object-storage-backed direct uploads, URL fetch reliability, attachment/download endpoints, source version APIs, and automated connector change detection.
 
 ### Sprint 0a.3 — AI Compiler & Policy (Week 4-5)

@@ -19,6 +19,10 @@ interface Source {
   ingestedAt: string;
 }
 
+function hasActiveSources(sources: Source[] | undefined): boolean {
+  return sources?.some((s) => s.status === 'pending' || s.status === 'processing') ?? false;
+}
+
 interface Connector {
   id: string;
   connectorType: string;
@@ -91,6 +95,8 @@ function SourceList({ workspaceId }: { workspaceId: string }): React.ReactElemen
     queryKey: ['sources', workspaceId],
     queryFn: () =>
       apiClient.get<{ sources: Source[] }>(`/workspaces/${workspaceId}/sources`),
+    refetchInterval: (query) =>
+      hasActiveSources(query.state.data?.sources) ? 3000 : false,
   });
 
   const sources = query.data?.sources ?? [];

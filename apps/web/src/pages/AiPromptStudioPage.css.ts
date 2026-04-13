@@ -18,10 +18,11 @@ export const functionCard = style([card, {
 
 export const functionCardCustomized = style([card, {
   transition: 'border-color 0.15s',
-  borderColor: vars.color.primary,
+  borderColor: vars.color.selectionBorder,
   borderWidth: '2px',
+  backgroundColor: vars.color.selectionSurface,
   ':hover': {
-    borderColor: vars.color.primary,
+    borderColor: vars.color.selectionBorder,
   },
 }]);
 
@@ -66,8 +67,8 @@ export const configTagLabel = style({
 });
 
 export const badgeCustomized = style([badge, {
-  backgroundColor: vars.color.info,
-  color: vars.color.background,
+  backgroundColor: vars.color.selection,
+  color: vars.color.selectionText,
 }]);
 
 export const badgeDefault = style([badge, {
@@ -188,8 +189,8 @@ export const pipelineNode = style({
 });
 
 export const pipelineNodeCustomized = style([pipelineNode, {
-  borderColor: vars.color.primary,
-  backgroundColor: vars.color.surfaceHover,
+  borderColor: vars.color.selectionBorder,
+  backgroundColor: vars.color.selectionSurface,
 }]);
 
 export const pipelineNodeStatic = style([pipelineNode, {
@@ -201,7 +202,7 @@ export const pipelineDot = style({
   width: '6px',
   height: '6px',
   borderRadius: vars.radius.full,
-  backgroundColor: vars.color.primary,
+  backgroundColor: vars.color.selectionText,
   flexShrink: 0,
 });
 

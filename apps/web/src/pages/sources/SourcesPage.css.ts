@@ -25,8 +25,11 @@ export const tab = style({
 });
 
 export const tabActive = style([tab, {
-  color: vars.color.primary,
-  borderBottomColor: vars.color.primary,
+  color: vars.color.selectionText,
+  borderBottomColor: vars.color.selectionBorder,
+  backgroundColor: vars.color.selectionSurface,
+  borderTopLeftRadius: vars.radius.md,
+  borderTopRightRadius: vars.radius.md,
 }]);
 
 export const dropZone = style({
@@ -44,14 +47,14 @@ export const dropZone = style({
   transition: 'all 0.15s',
   ':hover': {
     borderColor: vars.color.primary,
-    backgroundColor: '#eff6ff',
+    backgroundColor: vars.color.selectionSurface,
   },
 });
 
 export const dropZoneActive = style([dropZone, {
-  borderColor: vars.color.primary,
-  backgroundColor: '#eff6ff',
-  color: vars.color.primary,
+  borderColor: vars.color.selectionBorder,
+  backgroundColor: vars.color.selectionSurface,
+  color: vars.color.selectionText,
 }]);
 
 export const formGroup = style({
