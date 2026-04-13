@@ -11,6 +11,12 @@ const transactionMock = vi.fn(
 const compileQueueAdd = vi.fn().mockResolvedValue(undefined);
 const llmComplete = vi.fn();
 const answerQuestionPromptMock = vi.fn(() => [{ role: 'system', content: 'prompt' }]);
+const resolvePromptConfigMock = vi.fn(() => ({
+  model: 'gpt-5.4',
+  temperature: 0.3,
+  reasoningEffort: undefined,
+}));
+const applyPromptOverridesMock = vi.fn((messages) => messages);
 const resolveCollectionIdByType = vi.fn().mockResolvedValue('collection-1');
 
 const mockDb = {
@@ -71,6 +77,8 @@ vi.mock('../queues.js', () => ({
 
 vi.mock('@kaibase/ai', () => ({
   answerQuestionPrompt: answerQuestionPromptMock,
+  resolvePromptConfig: resolvePromptConfigMock,
+  applyPromptOverrides: applyPromptOverridesMock,
 }));
 
 describe('qaRoutes language handling', () => {
@@ -84,6 +92,8 @@ describe('qaRoutes language handling', () => {
     compileQueueAdd.mockClear();
     llmComplete.mockReset();
     answerQuestionPromptMock.mockClear();
+    resolvePromptConfigMock.mockClear();
+    applyPromptOverridesMock.mockClear();
     resolveCollectionIdByType.mockClear();
     mockDb.execute.mockClear();
     mockDb.select.mockClear();
