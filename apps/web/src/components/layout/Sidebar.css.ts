@@ -18,15 +18,81 @@ export const logo = style({
   marginBottom: vars.space.xs,
 });
 
-export const workspaceName = style({
-  fontSize: vars.fontSize.xs,
-  color: vars.color.textMuted,
-  fontWeight: 500,
-  padding: `0 ${vars.space.sm}`,
+export const workspaceSwitcher = style({
+  position: 'relative',
   marginBottom: vars.space.lg,
+});
+
+export const workspaceSwitcherButton = style({
+  display: 'flex',
+  alignItems: 'center',
+  width: '100%',
+  padding: `${vars.space.xs} ${vars.space.sm}`,
+  background: 'none',
+  border: 'none',
+  borderRadius: vars.radius.md,
+  cursor: 'pointer',
+  gap: vars.space.xs,
+  ':hover': {
+    backgroundColor: vars.color.surfaceHover,
+  },
+});
+
+export const workspaceSwitcherName = style({
+  flex: 1,
+  fontSize: vars.fontSize.xs,
+  color: vars.color.text,
+  fontWeight: 500,
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
+  textAlign: 'left',
+});
+
+export const workspaceSwitcherChevron = style({
+  flexShrink: 0,
+  color: vars.color.textMuted,
+  transition: 'transform 0.15s ease',
+});
+
+export const workspaceSwitcherChevronOpen = style({
+  transform: 'rotate(180deg)',
+});
+
+export const workspaceDropdown = style({
+  position: 'absolute',
+  top: 'calc(100% + 4px)',
+  left: 0,
+  right: 0,
+  backgroundColor: vars.color.background,
+  border: `1px solid ${vars.color.border}`,
+  borderRadius: vars.radius.md,
+  boxShadow: vars.shadow.md,
+  zIndex: 100,
+  overflow: 'hidden',
+});
+
+export const workspaceDropdownItem = style({
+  display: 'flex',
+  alignItems: 'center',
+  width: '100%',
+  padding: `${vars.space.sm} ${vars.space.sm}`,
+  gap: vars.space.xs,
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  fontSize: vars.fontSize.xs,
+  color: vars.color.text,
+  textAlign: 'left',
+  ':hover': {
+    backgroundColor: vars.color.surfaceHover,
+  },
+});
+
+export const workspaceDropdownCheck = style({
+  flexShrink: 0,
+  width: '12px',
+  color: vars.color.primary,
 });
 
 export const nav = style({

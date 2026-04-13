@@ -1,3 +1,4 @@
+import { useRef, useState, useEffect } from 'react';
 import { NavLink } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../lib/auth-context.js';
@@ -110,17 +111,74 @@ const navItems = [
   { path: '/settings', labelKey: 'nav.settings', icon: <SettingsIcon /> },
 ] as const;
 
+function ChevronDownIcon(): React.ReactElement {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 4l4 4 4-4" />
+    </svg>
+  );
+}
+
+function CheckIcon(): React.ReactElement {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 6l3 3 5-5" />
+    </svg>
+  );
+}
+
 export function Sidebar(): React.ReactElement {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
-  const { workspace } = useWorkspace();
+  const { workspace, workspaces, selectWorkspace } = useWorkspace();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const switcherRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    function handlePointerDown(e: PointerEvent) {
+      if (switcherRef.current && !switcherRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [dropdownOpen]);
 
   return (
     <aside className={styles.sidebar}>
       <div className={styles.logo}>{t('app.name')}</div>
 
       {workspace && (
-        <div className={styles.workspaceName}>{workspace.name}</div>
+        <div ref={switcherRef} className={styles.workspaceSwitcher}>
+          <button
+            className={styles.workspaceSwitcherButton}
+            aria-label={t('workspace.switch')}
+            aria-expanded={dropdownOpen}
+            onClick={() => setDropdownOpen((o) => !o)}
+          >
+            <span className={styles.workspaceSwitcherName}>{workspace.name}</span>
+            <span className={`${styles.workspaceSwitcherChevron}${dropdownOpen ? ` ${styles.workspaceSwitcherChevronOpen}` : ''}`}>
+              <ChevronDownIcon />
+            </span>
+          </button>
+          {dropdownOpen && (
+            <div className={styles.workspaceDropdown}>
+              {workspaces.map((w) => (
+                <button
+                  key={w.id}
+                  className={styles.workspaceDropdownItem}
+                  onClick={() => { selectWorkspace(w.id); setDropdownOpen(false); }}
+                >
+                  <span className={styles.workspaceDropdownCheck}>
+                    {w.id === workspace.id && <CheckIcon />}
+                  </span>
+                  <span>{w.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
 
       <nav className={styles.nav}>

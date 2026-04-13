@@ -2,6 +2,9 @@
   "app": {
     "name": "Kaibase"
   },
+  "workspace": {
+    "switch": "Switch workspace"
+  },
   "nav": {
     "dashboard": "Dashboard",
     "inbox": "Inbox",
