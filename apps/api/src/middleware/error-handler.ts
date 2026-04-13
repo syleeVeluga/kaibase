@@ -1,4 +1,5 @@
 import type { ErrorHandler } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import { logger } from '../logger.js';
 import { mapDbError } from './db-errors.js';
 
@@ -25,6 +26,13 @@ export const errorHandler: ErrorHandler = (err, c) => {
     return c.json<ApiError>(
       { code: err.code, message: err.message, details: err.details },
       err.statusCode as 400,
+    );
+  }
+
+  if (err instanceof HTTPException) {
+    return c.json<ApiError>(
+      { code: 'HTTP_ERROR', message: err.message },
+      err.status as 400,
     );
   }
 
