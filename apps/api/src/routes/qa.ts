@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import { askQuestionSchema, promoteAnswerSchema, generateId, type PolicyPack } from '@kaibase/shared';
-import { detectLanguage, resolveGenerationLanguage } from '@kaibase/shared';
+import { resolveLanguageFromText } from '@kaibase/shared';
 import { authMiddleware } from '../middleware/auth.js';
 import { workspaceMiddleware } from '../middleware/workspace.js';
 import { AppError } from '../middleware/error-handler.js';
@@ -45,8 +45,14 @@ qaRoutes.post('/ask', zValidator('json', askQuestionSchema), async (c) => {
   const workspaceId = c.get('workspaceId');
   const user = c.get('user');
   const { question, language, pageFilter } = c.req.valid('json');
-
-  const detectedLang = language ?? 'en';
+  const workspace = await db.query.workspaces.findFirst({
+    where: eq(workspaces.id, workspaceId),
+    columns: {
+      defaultLanguage: true,
+    },
+  });
+  const detectedLang = language
+    ?? resolveLanguageFromText(question, workspace?.defaultLanguage ?? 'en');
 
   // 1. Embed the question
   const queryEmbedding = await getEmbeddingProvider().generateEmbedding(question);
@@ -147,6 +153,8 @@ qaRoutes.post('/ask', zValidator('json', askQuestionSchema), async (c) => {
       detail: {
         question,
         answer: result.answer,
+        questionLanguage: detectedLang,
+        answerLanguage: detectedLang,
         citations: result.citations,
         confidence: result.confidence,
         intentType: result.intentType,
@@ -233,6 +241,9 @@ qaRoutes.post(
     const detail = answerEvent.detail as {
       question: string;
       answer: string;
+      language?: 'en' | 'ko';
+      questionLanguage?: 'en' | 'ko';
+      answerLanguage?: 'en' | 'ko';
       citations: Array<{ type: string; refId: string; title: string; excerpt: string }>;
       confidence: number;
     };
@@ -292,12 +303,12 @@ qaRoutes.post(
     const title = input.title ?? detail.question;
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 100);
     const traceId = generateId();
-    const detectedPageLanguage = detectLanguage(
-      `${title}\n${detail.answer ?? ''}`,
-    );
     const pageLanguage = input.language
-      ?? resolveGenerationLanguage(
-        detectedPageLanguage,
+      ?? detail.answerLanguage
+      ?? detail.questionLanguage
+      ?? detail.language
+      ?? resolveLanguageFromText(
+        `${title}\n${detail.answer ?? ''}`,
         workspace?.defaultLanguage ?? 'en',
       );
 

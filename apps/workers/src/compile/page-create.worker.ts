@@ -32,8 +32,7 @@ import { PolicyEngine } from '@kaibase/policy';
 import type { Language, PolicyPack, PolicyEvaluationResult } from '@kaibase/shared';
 import {
   generateId,
-  detectLanguage,
-  resolveGenerationLanguage,
+  resolveLanguageFromText,
 } from '@kaibase/shared';
 import { queues } from '../queues.js';
 import pino from 'pino';
@@ -253,8 +252,6 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
     // 3. Call LLM with create-page prompt (capable model tier)
     // -----------------------------------------------------------------
     const combinedText = usableSources.map((s) => s.contentText).join('\n\n');
-    const detectedLang = detectLanguage(combinedText);
-
     const createPageSources: CreatePageSource[] = usableSources.map((s) => ({
       sourceId: s.id,
       title: s.title ?? undefined,
@@ -292,7 +289,7 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
     ]);
 
     const language = pageLanguage
-      ?? resolveGenerationLanguage(detectedLang, workspace?.defaultLanguage ?? 'en');
+      ?? resolveLanguageFromText(combinedText, workspace?.defaultLanguage ?? 'en');
 
     const contextParts: string[] = [];
     if (entityRecords.length > 0) {

@@ -3,7 +3,14 @@
   "workspace": {
     "title": "Workspace",
     "name": "Workspace Name",
-    "language": "Default Language"
+    "language": "Default Language",
+    "current": "Current workspace",
+    "saving": "Saving...",
+    "saved": "Saved!"
+  },
+  "account": {
+    "title": "Account",
+    "signedInAs": "Signed in as"
   },
   "connectors": {
     "title": "Source Connectors",

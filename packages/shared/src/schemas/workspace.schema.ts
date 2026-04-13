@@ -10,7 +10,7 @@ export const createWorkspaceSchema = z.object({
     .max(100)
     .regex(/^[a-z0-9-]+$/),
   description: z.string().max(1000).nullable().optional(),
-  defaultLanguage: languageSchema.default('en'),
+  defaultLanguage: languageSchema.optional(),
 });
 
 export const updateWorkspaceSchema = createWorkspaceSchema.partial();

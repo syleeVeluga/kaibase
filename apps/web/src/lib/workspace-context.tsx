@@ -5,6 +5,7 @@ import {
   useEffect,
   useState,
 } from 'react';
+import { normalizeLanguageTag, type Language } from '@kaibase/shared';
 import { apiClient, ApiError } from './api-client.js';
 import { useAuth } from './auth-context.js';
 
@@ -13,7 +14,7 @@ interface Workspace {
   name: string;
   slug: string;
   description?: string | null;
-  defaultLanguage: string;
+  defaultLanguage: Language;
 }
 
 interface WorkspaceContextValue {
@@ -25,7 +26,12 @@ interface WorkspaceContextValue {
     name: string;
     slug: string;
     description?: string;
+    defaultLanguage?: Language;
   }) => Promise<Workspace>;
+  updateWorkspace: (
+    id: string,
+    data: Partial<Pick<Workspace, 'name' | 'description' | 'defaultLanguage'>>,
+  ) => Promise<Workspace>;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -83,8 +89,20 @@ export function WorkspaceProvider({
   );
 
   const createWorkspace = useCallback(
-    async (data: { name: string; slug: string; description?: string }) => {
-      const ws = await apiClient.post<Workspace>('/workspaces', data);
+    async (data: {
+      name: string;
+      slug: string;
+      description?: string;
+      defaultLanguage?: Language;
+    }) => {
+      const defaultLanguage =
+        data.defaultLanguage
+        ?? normalizeLanguageTag(window.navigator.language)
+        ?? 'en';
+      const ws = await apiClient.post<Workspace>('/workspaces', {
+        ...data,
+        defaultLanguage,
+      });
       setWorkspaces((prev) => [...prev, ws]);
       setWorkspace(ws);
       localStorage.setItem('workspaceId', ws.id);
@@ -93,9 +111,29 @@ export function WorkspaceProvider({
     [],
   );
 
+  const updateWorkspace = useCallback(
+    async (
+      id: string,
+      data: Partial<Pick<Workspace, 'name' | 'description' | 'defaultLanguage'>>,
+    ) => {
+      const updated = await apiClient.patch<Workspace>(`/workspaces/${id}`, data);
+      setWorkspaces((prev) => prev.map((item) => (item.id === id ? updated : item)));
+      setWorkspace((prev) => (prev?.id === id ? updated : prev));
+      return updated;
+    },
+    [],
+  );
+
   return (
     <WorkspaceContext
-      value={{ workspace, workspaces, isLoading, selectWorkspace, createWorkspace }}
+      value={{
+        workspace,
+        workspaces,
+        isLoading,
+        selectWorkspace,
+        createWorkspace,
+        updateWorkspace,
+      }}
     >
       {children}
     </WorkspaceContext>

@@ -3,7 +3,14 @@
   "workspace": {
     "title": "워크스페이스",
     "name": "워크스페이스 이름",
-    "language": "기본 언어"
+    "language": "기본 언어",
+    "current": "현재 워크스페이스",
+    "saving": "저장 중...",
+    "saved": "저장됨"
+  },
+  "account": {
+    "title": "계정",
+    "signedInAs": "로그인 계정"
   },
   "connectors": {
     "title": "소스 커넥터",

@@ -31,6 +31,10 @@
     "view": "보기",
     "retry": "다시 시도"
   },
+  "languages": {
+    "en": "영어",
+    "ko": "한국어"
+  },
   "auth": {
     "signInTitle": "계정에 로그인",
     "registerTitle": "계정 만들기",

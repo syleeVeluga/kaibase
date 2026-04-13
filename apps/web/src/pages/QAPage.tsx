@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
+import { resolveLanguageFromText } from '@kaibase/shared';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
 import { MutationError } from '../components/MutationError.js';
@@ -39,7 +40,10 @@ export function QAPage(): React.ReactElement {
 
   const askMutation = useMutation({
     mutationFn: (q: string) =>
-      apiClient.post<QAResponse>(`/workspaces/${wid}/qa/ask`, { question: q }),
+      apiClient.post<QAResponse>(`/workspaces/${wid}/qa/ask`, {
+        question: q,
+        language: resolveLanguageFromText(q, workspace?.defaultLanguage ?? 'en'),
+      }),
     onSuccess: (data, q) => {
       setHistory((prev) => [...prev, { question: q, response: data }]);
       setQuestion('');

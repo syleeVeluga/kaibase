@@ -8,7 +8,7 @@ import {
   SUMMARIZE_PROMPT_VERSION,
 } from '@kaibase/ai';
 import type { LLMReasoningEffort, SummarizeSourceResult } from '@kaibase/ai';
-import { detectLanguage, resolveGenerationLanguage } from '@kaibase/shared';
+import { resolveLanguageFromText } from '@kaibase/shared';
 import pino from 'pino';
 
 const logger = pino({ name: 'summarize-worker' });
@@ -70,10 +70,9 @@ export async function processSummarizeJob(job: Job): Promise<{ sourceId: string;
       },
     });
 
-    // 2. Detect language, fallback to workspace default for mixed input
-    const detectedLang = detectLanguage(contentText);
-    const language = resolveGenerationLanguage(
-      detectedLang,
+    // 2. Resolve generation language from content before using workspace fallback
+    const language = resolveLanguageFromText(
+      contentText,
       workspace?.defaultLanguage ?? 'en',
     );
 

@@ -13,7 +13,7 @@ import type {
   LLMReasoningEffort,
 } from '@kaibase/ai';
 import { queues } from '../queues.js';
-import { detectLanguage, resolveGenerationLanguage } from '@kaibase/shared';
+import { resolveLanguageFromText } from '@kaibase/shared';
 import pino from 'pino';
 
 const logger = pino({ name: 'classify-worker' });
@@ -75,13 +75,12 @@ export async function processClassifyJob(job: Job): Promise<{ sourceId: string; 
     // ---------------------------------------------------------------
     // 2. Call LLM with classify prompt (fast model tier)
     // ---------------------------------------------------------------
-    const detectedLanguage = detectLanguage(source.contentText);
     const promptInput: ClassifySourceInput = {
       sourceText: source.contentText,
       sourceTitle: source.title ?? undefined,
       sourceTypeHint: source.sourceType,
-      language: resolveGenerationLanguage(
-        detectedLanguage,
+      language: resolveLanguageFromText(
+        source.contentText,
         workspace?.defaultLanguage ?? 'en',
       ),
     };

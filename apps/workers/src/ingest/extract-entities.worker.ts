@@ -14,7 +14,7 @@ import type {
   ExtractedConcept,
   LLMReasoningEffort,
 } from '@kaibase/ai';
-import { detectLanguage, resolveGenerationLanguage } from '@kaibase/shared';
+import { resolveLanguageFromText } from '@kaibase/shared';
 import type { EntityType } from '@kaibase/shared';
 import pino from 'pino';
 
@@ -188,9 +188,8 @@ export async function processExtractEntitiesJob(job: Job): Promise<{ sourceId: s
     });
 
     // 3. Detect language and build prompt
-    const detectedLang = detectLanguage(contentText);
-    const language = resolveGenerationLanguage(
-      detectedLang,
+    const language = resolveLanguageFromText(
+      contentText,
       workspace?.defaultLanguage ?? 'en',
     );
 

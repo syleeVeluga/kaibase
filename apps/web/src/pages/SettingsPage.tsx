@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link } from 'react-router';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from '@tanstack/react-query';
-import { apiClient } from '../lib/api-client.js';
+import type { Language } from '@kaibase/shared';
 import { useAuth } from '../lib/auth-context.js';
 import { useWorkspace } from '../lib/workspace-context.js';
 import * as shared from '../theme/shared.css.js';
@@ -36,25 +36,33 @@ export function SettingsPage(): React.ReactElement {
 }
 
 function WorkspaceSettings(): React.ReactElement {
-  const { workspace, workspaces, selectWorkspace } = useWorkspace();
+  const { t } = useTranslation(['common', 'settings']);
+  const { workspace, workspaces, selectWorkspace, updateWorkspace } = useWorkspace();
   const [name, setName] = useState(workspace?.name ?? '');
+  const [defaultLanguage, setDefaultLanguage] = useState<Language>(workspace?.defaultLanguage ?? 'en');
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setName(workspace?.name ?? '');
+    setDefaultLanguage(workspace?.defaultLanguage ?? 'en');
+    setSaved(false);
+  }, [workspace?.id, workspace?.name, workspace?.defaultLanguage]);
 
   const mutation = useMutation({
     mutationFn: () =>
-      apiClient.patch(`/workspaces/${workspace?.id ?? ''}`, { name }),
+      updateWorkspace(workspace?.id ?? '', { name, defaultLanguage }),
     onSuccess: () => setSaved(true),
   });
 
   return (
     <section>
       <h2 className={styles.sectionHeading}>
-        Workspace
+        {t('settings:workspace.title')}
       </h2>
 
       {workspaces.length > 1 && (
         <div className={sourceStyles.formGroup}>
-          <label className={sourceStyles.formLabel}>Current workspace</label>
+          <label className={sourceStyles.formLabel}>{t('settings:workspace.current')}</label>
           <select
             className={sourceStyles.formInput}
             value={workspace?.id ?? ''}
@@ -74,15 +82,29 @@ function WorkspaceSettings(): React.ReactElement {
         }}
       >
         <div className={sourceStyles.formGroup}>
-          <label className={sourceStyles.formLabel}>Workspace name</label>
+          <label className={sourceStyles.formLabel}>{t('settings:workspace.name')}</label>
           <input
             className={sourceStyles.formInput}
             value={name}
             onChange={(e) => { setName(e.target.value); setSaved(false); }}
           />
         </div>
+        <div className={sourceStyles.formGroup}>
+          <label className={sourceStyles.formLabel}>{t('settings:workspace.language')}</label>
+          <select
+            className={sourceStyles.formInput}
+            value={defaultLanguage}
+            onChange={(e) => {
+              setDefaultLanguage(e.target.value as Language);
+              setSaved(false);
+            }}
+          >
+            <option value="en">{t('common:languages.en')}</option>
+            <option value="ko">{t('common:languages.ko')}</option>
+          </select>
+        </div>
         <button className={shared.primaryButton} type="submit" disabled={mutation.isPending}>
-          {saved ? 'Saved!' : mutation.isPending ? 'Saving...' : 'Save'}
+          {saved ? t('settings:workspace.saved') : mutation.isPending ? t('settings:workspace.saving') : t('common:actions.save')}
         </button>
       </form>
     </section>
@@ -90,18 +112,19 @@ function WorkspaceSettings(): React.ReactElement {
 }
 
 function AccountSettings(): React.ReactElement {
+  const { t } = useTranslation(['common', 'settings']);
   const { user, logout } = useAuth();
 
   return (
     <section>
       <h2 className={styles.sectionHeading}>
-        Account
+        {t('settings:account.title')}
       </h2>
       <p className={styles.accountDescription}>
-        Signed in as <strong>{user?.email}</strong>
+        {t('settings:account.signedInAs')} <strong>{user?.email}</strong>
       </p>
       <button className={shared.secondaryButton} onClick={logout}>
-        Sign out
+        {t('common:actions.signOut')}
       </button>
     </section>
   );

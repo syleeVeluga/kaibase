@@ -31,6 +31,10 @@
     "view": "View",
     "retry": "Retry"
   },
+  "languages": {
+    "en": "English",
+    "ko": "Korean"
+  },
   "auth": {
     "signInTitle": "Sign in to your account",
     "registerTitle": "Create your account",

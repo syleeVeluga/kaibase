@@ -1,6 +1,11 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import { createWorkspaceSchema, updateWorkspaceSchema, generateId } from '@kaibase/shared';
+import {
+  createWorkspaceSchema,
+  updateWorkspaceSchema,
+  generateId,
+  normalizeLanguageTag,
+} from '@kaibase/shared';
 import { authMiddleware } from '../middleware/auth.js';
 import { AppError } from '../middleware/error-handler.js';
 import { db } from '@kaibase/db/client';
@@ -17,6 +22,10 @@ workspaceRoutes.post('/', zValidator('json', createWorkspaceSchema), async (c) =
   const input = c.req.valid('json');
   const user = c.get('user');
   const id = generateId();
+  const defaultLanguage =
+    input.defaultLanguage
+    ?? normalizeLanguageTag(c.req.header('Accept-Language'))
+    ?? 'en';
 
   await db.transaction(async (tx) => {
     await tx.insert(workspaces).values({
@@ -24,7 +33,7 @@ workspaceRoutes.post('/', zValidator('json', createWorkspaceSchema), async (c) =
       name: input.name,
       slug: input.slug,
       description: input.description ?? null,
-      defaultLanguage: input.defaultLanguage,
+      defaultLanguage,
     });
     await tx.insert(workspaceMembers).values({
       workspaceId: id,
@@ -47,7 +56,7 @@ workspaceRoutes.post('/', zValidator('json', createWorkspaceSchema), async (c) =
     });
   });
 
-  return c.json({ id, ...input }, 201);
+  return c.json({ id, ...input, defaultLanguage }, 201);
 });
 
 workspaceRoutes.get('/', async (c) => {

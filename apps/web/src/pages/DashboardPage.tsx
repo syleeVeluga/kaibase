@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
+import { normalizeLanguageTag, type Language } from '@kaibase/shared';
 import { apiClient } from '../lib/api-client.js';
 import { useWorkspace } from '../lib/workspace-context.js';
 import { ErrorBanner } from '../components/ErrorBanner.js';
@@ -24,10 +25,13 @@ interface HealthData {
 }
 
 export function DashboardPage(): React.ReactElement {
-  const { t } = useTranslation(['dashboard', 'common', 'errors']);
+  const { t, i18n } = useTranslation(['dashboard', 'common', 'errors']);
   const { workspace, createWorkspace } = useWorkspace();
   const wid = workspace?.id;
   const [name, setName] = useState('');
+  const [defaultLanguage, setDefaultLanguage] = useState<Language>(
+    normalizeLanguageTag(i18n.resolvedLanguage) ?? 'en',
+  );
   const [createError, setCreateError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
@@ -62,6 +66,7 @@ export function DashboardPage(): React.ReactElement {
       await createWorkspace({
         name: name.trim(),
         slug: toSlug(name),
+        defaultLanguage,
       });
       setName('');
     } catch {
@@ -97,6 +102,19 @@ export function DashboardPage(): React.ReactElement {
               placeholder={t('dashboard:emptyState.placeholder')}
               required
             />
+
+            <label className={styles.emptyStateLabel} htmlFor="workspace-language">
+              {t('dashboard:emptyState.languageLabel')}
+            </label>
+            <select
+              id="workspace-language"
+              className={styles.emptyStateInput}
+              value={defaultLanguage}
+              onChange={(event) => setDefaultLanguage(event.target.value as Language)}
+            >
+              <option value="en">{t('common:languages.en')}</option>
+              <option value="ko">{t('common:languages.ko')}</option>
+            </select>
 
             {createError && <div className={shared.errorBanner}>{createError}</div>}
 
