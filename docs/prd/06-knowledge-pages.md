@@ -218,6 +218,31 @@ Collections group pages. This is a custom implementation (not derived from AFFiN
 
 Users can create custom collections and set policy rules to auto-route pages to them.
 
+### Default Assignment Rules
+
+When the system creates a canonical page without an explicit `collection_id`, it assigns a default collection from the page type:
+
+| Page Type | Default Collection Type |
+|-----------|--------------------------|
+| `project` | `project` |
+| `entity` | `entities` |
+| `concept` | `concepts` |
+| `brief` | `briefs` |
+| `answer` | `briefs` |
+| `summary` | `inbox` |
+| `comparison` | `inbox` |
+| `custom` | `inbox` |
+
+Workspace policy may override this routing decision by returning a target collection at evaluation time. If the referenced collection is unavailable in the workspace, page creation still succeeds and `collection_id` remains `NULL`.
+
+### Review Queue Semantics
+
+`Review Queue` and `review_pending` status are related but not identical.
+
+- A page can belong to a domain collection such as `Projects`, `Entities`, `Concepts`, or `Briefs` while still requiring review.
+- Review flows should treat page status as the canonical signal for queue membership.
+- Implementations may show a dedicated review view without rewriting the page's primary collection membership.
+
 ---
 
 ## Page Relationships

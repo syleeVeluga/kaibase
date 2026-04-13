@@ -165,9 +165,15 @@ Step 4: "Set your preferences" (optional)
 The Inbox shows two types of items, clearly distinguished:
 
 1. **Newly ingested sources** — files detected from connected folders or uploaded directly. Shows source metadata, parsing status, and which AI compilation jobs are running.
-2. **AI-generated pages awaiting review** — draft pages created by the AI compiler that need user attention (either `DRAFT_ONLY` or `REVIEW_REQUIRED`).
+2. **Recently generated pages** — pages created by the AI compiler, regardless of their underlying collection membership.
 
 When a source has been fully processed, its Inbox entry links to the generated pages. When no pages have been generated yet (processing in progress), the entry shows a progress indicator.
+
+Important clarification: the `/inbox` route is a dashboard-style activity view, not a strict rendering of pages whose `collection_id` equals the `inbox` collection. Collection membership is surfaced through collection detail views and page metadata, while Inbox combines raw sources with recent page activity.
+
+### 8a. Page Metadata Panel
+
+The page detail sidebar should expose collection membership as part of page metadata alongside type, status, language, and timestamps. If a page belongs to a collection, the collection name should link to that collection's detail view.
 
 ### 9. Knowledge Health Dashboard
 

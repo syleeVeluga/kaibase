@@ -60,6 +60,7 @@ interface PolicyRule {
   enabled: boolean;
   conditions: PolicyCondition[];   // AND logic within a rule
   outcome: PolicyOutcome;
+  target_collection_type?: CollectionType; // optional override for page routing
   reviewers?: string[];            // user IDs for REVIEW_REQUIRED
   notify?: string[];               // user IDs to notify
 }
@@ -99,6 +100,13 @@ type ConditionOperator =
   | 'exists'
   | 'not_exists';
 ```
+
+In execution, collection routing is a two-step decision:
+
+1. The caller derives a default collection from the page type.
+2. Policy evaluation may override that default by returning `target_collection_type`.
+
+If no rule specifies a target collection, the page-type default remains in effect.
 
 ---
 

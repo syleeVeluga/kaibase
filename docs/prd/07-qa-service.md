@@ -177,7 +177,7 @@ GET    /api/v1/workspaces/:wid/qa/suggested              -- suggested questions 
 - [ ] "Save as Page" button on every answer
 - [ ] Promoted answers become canonical pages with proper citations
 - [ ] Auto-promotion respects workspace policy configuration
-- [ ] Promoted pages appear in the Briefs collection by default
+- [ ] Promoted pages appear in the Briefs collection by default unless policy overrides the target collection
 - [ ] Duplicate question detection prevents redundant page creation
 
 ---
