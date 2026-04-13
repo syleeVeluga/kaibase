@@ -1,4 +1,19 @@
 {
+  "inbox": {
+    "recentSources": "Recent Sources",
+    "recentPages": "Generated Pages",
+    "noSources": "No sources yet.",
+    "uploadLink": "Upload a file or connect a folder to get started.",
+    "noPages": "No pages generated yet. Pages will appear here once AI compiles your sources.",
+    "colTitle": "Title",
+    "colType": "Type",
+    "colStatus": "Status",
+    "colIngested": "Ingested",
+    "colCreated": "Created",
+    "clearPending": "Clear pending/failed ({{count}})",
+    "confirmClearPending": "Delete all pending and failed sources? This cannot be undone.",
+    "confirmDelete": "Delete \"{{title}}\"? This cannot be undone."
+  },
   "title": "Pages",
   "create": "Create Page",
   "empty": "No pages yet. Connect a folder to get started.",

@@ -29,7 +29,8 @@
     "archive": "Archive",
     "back": "Back",
     "view": "View",
-    "retry": "Retry"
+    "retry": "Retry",
+    "deleting": "Deleting..."
   },
   "languages": {
     "en": "English",

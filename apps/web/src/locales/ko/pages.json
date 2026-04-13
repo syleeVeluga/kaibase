@@ -1,4 +1,19 @@
 {
+  "inbox": {
+    "recentSources": "최근 소스",
+    "recentPages": "생성된 페이지",
+    "noSources": "아직 소스가 없습니다.",
+    "uploadLink": "파일을 업로드하거나 폴더를 연결하여 시작하세요.",
+    "noPages": "아직 생성된 페이지가 없습니다. AI가 소스를 컴파일하면 여기에 표시됩니다.",
+    "colTitle": "제목",
+    "colType": "유형",
+    "colStatus": "상태",
+    "colIngested": "수집일",
+    "colCreated": "생성일",
+    "clearPending": "대기/실패 소스 삭제 ({{count}}개)",
+    "confirmClearPending": "대기 중이거나 실패한 소스를 모두 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    "confirmDelete": "\"{{title}}\"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+  },
   "title": "페이지",
   "create": "페이지 생성",
   "empty": "아직 페이지가 없습니다. 폴더를 연결하여 시작하세요.",

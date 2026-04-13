@@ -424,6 +424,50 @@ sourceRoutes.post('/url', zValidator('json', submitUrlSchema), async (c) => {
   return c.json({ id }, 201);
 });
 
+// Delete a single source
+sourceRoutes.delete('/:id', async (c) => {
+  const workspaceId = c.get('workspaceId');
+  const sourceId = c.req.param('id');
+
+  const [deleted] = await db
+    .delete(sources)
+    .where(and(eq(sources.id, sourceId), eq(sources.workspaceId, workspaceId)))
+    .returning({ id: sources.id });
+
+  if (!deleted) {
+    throw new AppError(404, 'NOT_FOUND', 'errors.notFound');
+  }
+
+  logger.info({ sourceId, workspaceId }, 'Source deleted');
+  return c.json({ deleted: true });
+});
+
+// Bulk delete sources (optional ?status=pending,failed filter)
+sourceRoutes.delete('/', async (c) => {
+  const workspaceId = c.get('workspaceId');
+  const statusParam = c.req.query('status');
+
+  let whereClause;
+  if (statusParam) {
+    const statuses = statusParam.split(',').filter(Boolean) as ('pending' | 'processing' | 'processed' | 'failed')[];
+    const { inArray } = await import('drizzle-orm');
+    whereClause = and(
+      eq(sources.workspaceId, workspaceId),
+      inArray(sources.status, statuses),
+    );
+  } else {
+    whereClause = eq(sources.workspaceId, workspaceId);
+  }
+
+  const deleted = await db
+    .delete(sources)
+    .where(whereClause)
+    .returning({ id: sources.id });
+
+  logger.info({ workspaceId, count: deleted.length, statusFilter: statusParam }, 'Bulk sources deleted');
+  return c.json({ deleted: deleted.length });
+});
+
 // Submit text
 sourceRoutes.post('/text', zValidator('json', submitTextSchema), async (c) => {
   const workspaceId = c.get('workspaceId');
