@@ -75,6 +75,7 @@ export class PolicyEngine {
           matchedRuleId: rule.id,
           matchedRuleName: rule.name,
           reasoning: this.buildReasoning(rule, 'matched'),
+          targetCollectionType: rule.targetCollectionType ?? null,
         };
       }
     }
@@ -85,6 +86,7 @@ export class PolicyEngine {
       matchedRuleId: null,
       matchedRuleName: null,
       reasoning: this.buildNoMatchReasoning(),
+      targetCollectionType: null,
     };
   }
 

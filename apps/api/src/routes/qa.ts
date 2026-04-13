@@ -7,10 +7,13 @@ import { workspaceMiddleware } from '../middleware/workspace.js';
 import { AppError } from '../middleware/error-handler.js';
 import { db } from '@kaibase/db/client';
 import {
+  getCollectionTypeForPageType,
+  resolveCollectionIdByType,
+} from '@kaibase/db';
+import {
   canonicalPages,
   activityEvents,
   compilationTraces,
-  collections,
   policyPacks,
   workspaces,
 } from '@kaibase/db/schema';
@@ -244,6 +247,7 @@ qaRoutes.post(
     const activePack = policyRows[0];
     let outcome = 'REVIEW_REQUIRED';
     let matchedRuleId: string | undefined;
+    let targetCollectionType = getCollectionTypeForPageType(input.pageType);
 
     if (activePack) {
       const policyContext = {
@@ -256,6 +260,7 @@ qaRoutes.post(
       const decision = engine.evaluate(policyContext);
       outcome = decision.outcome;
       matchedRuleId = decision.matchedRuleId ?? undefined;
+      targetCollectionType = decision.targetCollectionType ?? targetCollectionType;
     }
 
     if (outcome === 'BLOCKED') {
@@ -270,19 +275,10 @@ qaRoutes.post(
           ? 'draft'
           : 'review_pending';
 
-    // 4. Find Briefs collection for this workspace
-    const briefsRows = await db
-      .select({ id: collections.id })
-      .from(collections)
-      .where(
-        and(
-          eq(collections.workspaceId, workspaceId),
-          eq(collections.collectionType, 'briefs'),
-        ),
-      )
-      .limit(1);
-
-    const collectionId = input.collectionId ?? briefsRows[0]?.id ?? null;
+    const collectionId = input.collectionId ?? await resolveCollectionIdByType({
+      workspaceId,
+      collectionType: targetCollectionType,
+    });
 
     const workspace = await db.query.workspaces.findFirst({
       where: eq(workspaces.id, workspaceId),
@@ -351,6 +347,7 @@ qaRoutes.post(
           promotedFromAnswer: answerId,
           policyOutcome: outcome,
           pageType: input.pageType,
+          targetCollectionType,
         },
       });
     });

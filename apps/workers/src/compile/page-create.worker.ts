@@ -1,5 +1,5 @@
 import type { Job } from 'bullmq';
-import { eq, and, inArray } from 'drizzle-orm';
+import { eq, and, inArray, sql } from 'drizzle-orm';
 import { db } from '@kaibase/db';
 import {
   sources,
@@ -13,6 +13,8 @@ import {
   concepts,
   pageTemplates,
   workspaces,
+  resolveCollectionIdByType,
+  getCollectionTypeForPageType,
 } from '@kaibase/db';
 import {
   OpenAIProvider,
@@ -107,6 +109,24 @@ function collectCitedSourceIds(blocks: CreatePageResult['blocks']): Set<string> 
   return cited;
 }
 
+async function findExistingSingleSourcePage(params: {
+  workspaceId: string;
+  sourceId: string;
+}): Promise<string | null> {
+  const rows = await db.execute<{ page_id: string }>(sql`
+    SELECT ct.page_id
+    FROM compilation_traces ct
+    JOIN canonical_pages cp ON cp.id = ct.page_id
+    WHERE cp.workspace_id = ${params.workspaceId}
+      AND array_length(ct.source_ids, 1) = 1
+      AND ct.source_ids[1] = ${params.sourceId}::uuid
+    ORDER BY ct.created_at DESC
+    LIMIT 1
+  `);
+
+  return rows[0]?.page_id ?? null;
+}
+
 // ---------------------------------------------------------------------------
 // Worker
 // ---------------------------------------------------------------------------
@@ -196,6 +216,7 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
         matchedRuleId: null,
         matchedRuleName: null,
         reasoning: 'No active policy pack found for workspace. Defaulting to REVIEW_REQUIRED.',
+        targetCollectionType: null,
       };
     }
 
@@ -351,27 +372,83 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
       'LLM page creation complete',
     );
 
+    const singleUsableSource = usableSources.length === 1 ? usableSources[0] : null;
+    const existingPageId =
+      singleUsableSource
+        ? await findExistingSingleSourcePage({
+            workspaceId,
+            sourceId: singleUsableSource.id,
+          })
+        : null;
+
     // -----------------------------------------------------------------
     // 4-7. Create all DB records in a single transaction
     // -----------------------------------------------------------------
-    const pageId = generateId();
+    const pageId = existingPageId ?? generateId();
     const pageStatus = statusFromOutcome(policyResult.outcome);
+    const collectionType =
+      policyResult.targetCollectionType ?? getCollectionTypeForPageType(pageType as CreatePageInput['pageType']);
+    const collectionId = await resolveCollectionIdByType({
+      workspaceId,
+      collectionType,
+    });
+    const reviewTaskType = existingPageId ? 'page_update' : 'page_creation';
+    const activityEventType = existingPageId ? 'page_update' : 'page_create';
 
     await db.transaction(async (tx) => {
-      // 4. Create CanonicalPage record
-      await tx.insert(canonicalPages).values({
-        id: pageId,
-        workspaceId,
-        pageType: pageType as 'project' | 'entity' | 'concept' | 'brief' | 'answer' | 'summary' | 'comparison' | 'custom',
-        title: result.title,
-        titleKo: result.titleKo ?? null,
-        slug: generateSlug(result.title),
-        contentSnapshot: JSON.stringify(result.blocks),
-        status: pageStatus,
-        createdBy: 'ai',
-        language,
-        templateId: matchedTemplateId ?? null,
-      });
+      // 4. Create or update the CanonicalPage record.
+      if (existingPageId) {
+        await tx
+          .update(canonicalPages)
+          .set({
+            pageType: pageType as 'project' | 'entity' | 'concept' | 'brief' | 'answer' | 'summary' | 'comparison' | 'custom',
+            title: result.title,
+            titleKo: result.titleKo ?? null,
+            slug: generateSlug(result.title),
+            contentSnapshot: JSON.stringify(result.blocks),
+            status: pageStatus,
+            language,
+            collectionId,
+            templateId: matchedTemplateId ?? null,
+            updatedAt: new Date(),
+            publishedAt: pageStatus === 'published' ? new Date() : null,
+          })
+          .where(
+            and(
+              eq(canonicalPages.id, pageId),
+              eq(canonicalPages.workspaceId, workspaceId),
+            ),
+          );
+
+        await tx.delete(citations).where(eq(citations.pageId, pageId));
+
+        await tx
+          .update(reviewTasks)
+          .set({ status: 'expired' })
+          .where(
+            and(
+              eq(reviewTasks.workspaceId, workspaceId),
+              eq(reviewTasks.targetPageId, pageId),
+              eq(reviewTasks.status, 'pending'),
+            ),
+          );
+      } else {
+        await tx.insert(canonicalPages).values({
+          id: pageId,
+          workspaceId,
+          pageType: pageType as 'project' | 'entity' | 'concept' | 'brief' | 'answer' | 'summary' | 'comparison' | 'custom',
+          title: result.title,
+          titleKo: result.titleKo ?? null,
+          slug: generateSlug(result.title),
+          contentSnapshot: JSON.stringify(result.blocks),
+          status: pageStatus,
+          createdBy: 'ai',
+          collectionId,
+          language,
+          templateId: matchedTemplateId ?? null,
+          publishedAt: pageStatus === 'published' ? new Date() : null,
+        });
+      }
 
       // 5. Create Citation records for each source referenced in blocks
       const citedSourceIds = collectCitedSourceIds(result.blocks);
@@ -419,7 +496,7 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
       if (policyResult.outcome === 'REVIEW_REQUIRED') {
         await tx.insert(reviewTasks).values({
           workspaceId,
-          taskType: 'page_creation',
+          taskType: reviewTaskType,
           status: 'pending',
           targetPageId: pageId,
           proposedChange: { blocks: result.blocks },
@@ -431,7 +508,7 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
       // 7b. Log activity event (append-only)
       await tx.insert(activityEvents).values({
         workspaceId,
-        eventType: 'page_create',
+        eventType: activityEventType,
         actorType: 'ai',
         actorId: response.model,
         targetType: 'canonical_page',
@@ -442,6 +519,7 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
           policyOutcome: policyResult.outcome,
           title: result.title,
           blockCount: result.blocks.length,
+          updatedExistingPage: !!existingPageId,
           promptVersion: CREATE_PAGE_PROMPT_VERSION,
           model: response.model,
           tokenUsage: response.tokenUsage,
@@ -455,14 +533,17 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
     await queues.aiPageCompile.add('embedding', { pageId, workspaceId });
 
     logger.info(
-      { pageId, workspaceId, status: pageStatus },
-      'Page created successfully, enqueued embedding job',
+      { pageId, workspaceId, status: pageStatus, updatedExistingPage: !!existingPageId },
+      existingPageId
+        ? 'Page updated successfully, enqueued embedding job'
+        : 'Page created successfully, enqueued embedding job',
     );
 
     return {
       sourceIds: usableSources.map((s) => s.id),
       pageId,
       pageCreated: true,
+      pageUpdated: !!existingPageId,
       status: pageStatus,
       policyOutcome: policyResult.outcome,
     };

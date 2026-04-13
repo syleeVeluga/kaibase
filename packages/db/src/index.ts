@@ -4,3 +4,4 @@ export type { Db } from './client.js';
 
 // Re-export all schema tables, enums, and types
 export * from './schema/index.js';
+export * from './collections.js';

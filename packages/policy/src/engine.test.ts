@@ -271,6 +271,49 @@ describe('matchRule', () => {
   });
 });
 
+describe('PolicyEngine collection routing', () => {
+  it('returns the rule target collection when a matching rule provides one', () => {
+    const pack: PolicyPack = {
+      id: 'pack-1',
+      workspaceId: 'workspace-1',
+      name: 'Routing pack',
+      version: 1,
+      isActive: true,
+      defaultOutcome: 'REVIEW_REQUIRED',
+      rules: [
+        {
+          id: 'rule-1',
+          name: 'Entity autopublish',
+          description: '',
+          conditions: [
+            { field: 'page_type', operator: 'equals', value: 'entity' },
+          ],
+          outcome: 'AUTO_PUBLISH',
+          targetCollectionType: 'entities',
+          priority: 0,
+          enabled: true,
+        },
+      ],
+      createdAt: new Date('2026-04-13T00:00:00.000Z'),
+      updatedAt: new Date('2026-04-13T00:00:00.000Z'),
+      createdBy: 'user-1',
+    };
+
+    const engine = new PolicyEngine(pack);
+    const result = engine.evaluate({ page_type: 'entity' });
+
+    expect(result.outcome).toBe('AUTO_PUBLISH');
+    expect(result.targetCollectionType).toBe('entities');
+  });
+
+  it('returns null target collection when no rule matches', () => {
+    const engine = new PolicyEngine(getDefaultPolicyPack('workspace-1', 'user-1'));
+    const result = engine.evaluate({ source_type: 'unknown' });
+
+    expect(result.targetCollectionType).toBeNull();
+  });
+});
+
 // ---------------------------------------------------------------------------
 // PolicyEngine — evaluation logic
 // ---------------------------------------------------------------------------

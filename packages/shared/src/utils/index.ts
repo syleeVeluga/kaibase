@@ -5,3 +5,4 @@ export {
 	resolveGenerationLanguage,
 	type DetectedLanguage,
 } from './language.js';
+export { getDefaultCollectionTypeForPageType } from './collections.js';

@@ -22,9 +22,16 @@ interface PageDetail {
   contentSnapshot: string;
   createdBy: string;
   language: string;
+  collectionId: string | null;
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+}
+
+interface CollectionSummary {
+  id: string;
+  name: string;
+  nameKo: string | null;
 }
 
 export function PageDetailPage(): React.ReactElement {
@@ -62,6 +69,12 @@ export function PageDetailPage(): React.ReactElement {
     [query.data?.contentSnapshot],
   );
 
+  const collectionsQuery = useQuery({
+    queryKey: ['collections', wid],
+    queryFn: () => apiClient.get<{ collections: CollectionSummary[] }>(`/workspaces/${wid}/collections`),
+    enabled: !!wid,
+  });
+
   if (!wid) return <div className={shared.loading}>Select a workspace</div>;
   if (query.isLoading) return <div className={shared.loading}>{t('common:status.processing')}</div>;
 
@@ -79,6 +92,7 @@ export function PageDetailPage(): React.ReactElement {
   }
 
   const page = query.data;
+  const collection = collectionsQuery.data?.collections.find((item) => item.id === page.collectionId) ?? null;
 
   const canPublish = page.status === 'draft' || page.status === 'review_pending';
   const canArchive = page.status !== 'archived';
@@ -149,6 +163,13 @@ export function PageDetailPage(): React.ReactElement {
               value={new Date(page.publishedAt).toLocaleDateString()}
             />
           )}
+          {collection && (
+            <MetaCard
+              label={t('pages:detail.collection', 'Collection')}
+              value={collection.name}
+              href={`/collections/${collection.id}`}
+            />
+          )}
           <MetaCard label={t('pages:detail.language')} value={page.language.toUpperCase()} />
         </div>
       </div>
@@ -156,11 +177,21 @@ export function PageDetailPage(): React.ReactElement {
   );
 }
 
-function MetaCard({ label, value }: { label: string; value: string }): React.ReactElement {
+function MetaCard({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+}): React.ReactElement {
   return (
     <div className={styles.metaCard}>
       <div className={styles.metaLabel}>{label}</div>
-      <div className={styles.metaValue}>{value}</div>
+      <div className={styles.metaValue}>
+        {href ? <Link to={href}>{value}</Link> : value}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { collectionTypeSchema } from './page.schema.js';
 
 export const policyOutcomeSchema = z.enum([
   'AUTO_PUBLISH',
@@ -19,6 +20,7 @@ export const policyRuleSchema = z.object({
   description: z.string(),
   conditions: z.array(policyConditionSchema),
   outcome: policyOutcomeSchema,
+  targetCollectionType: collectionTypeSchema.optional(),
   priority: z.number().int().min(0),
   enabled: z.boolean(),
 });

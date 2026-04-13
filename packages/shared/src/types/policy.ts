@@ -1,3 +1,5 @@
+import type { CollectionType } from './page.js';
+
 export type PolicyOutcome = 'AUTO_PUBLISH' | 'DRAFT_ONLY' | 'REVIEW_REQUIRED' | 'BLOCKED';
 
 export interface PolicyPack {
@@ -19,6 +21,7 @@ export interface PolicyRule {
   description: string;
   conditions: PolicyCondition[];
   outcome: PolicyOutcome;
+  targetCollectionType?: CollectionType;
   priority: number;
   enabled: boolean;
 }
@@ -34,4 +37,5 @@ export interface PolicyEvaluationResult {
   matchedRuleId: string | null;
   matchedRuleName: string | null;
   reasoning: string;
+  targetCollectionType: CollectionType | null;
 }
