@@ -114,7 +114,7 @@ If no rule specifies a target collection, the page-type default remains in effec
 
 ```typescript
 interface AIConfig {
-  default_model: string;           // e.g., 'gpt-4o', 'claude-sonnet-4-6'
+  default_model: string;           // e.g., 'gpt-5.4', 'claude-sonnet-4-6'
   fallback_model?: string;
   classification_model?: string;   // lighter model for classification
   summary_language: 'en' | 'ko' | 'both';
