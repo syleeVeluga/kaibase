@@ -22,14 +22,18 @@ import dashboardEn from './locales/en/dashboard.json';
 import dashboardKo from './locales/ko/dashboard.json';
 import settingsEn from './locales/en/settings.json';
 import settingsKo from './locales/ko/settings.json';
+import graphEn from './locales/en/graph.json';
+import graphKo from './locales/ko/graph.json';
+import notificationsEn from './locales/en/notifications.json';
+import notificationsKo from './locales/ko/notifications.json';
 
 void i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources: {
-      en: { common: commonEn, errors: errorsEn, pages: pagesEn, reviews: reviewsEn, qa: qaEn, collections: collectionsEn, search: searchEn, activity: activityEn, dashboard: dashboardEn, settings: settingsEn },
-      ko: { common: commonKo, errors: errorsKo, pages: pagesKo, reviews: reviewsKo, qa: qaKo, collections: collectionsKo, search: searchKo, activity: activityKo, dashboard: dashboardKo, settings: settingsKo },
+      en: { common: commonEn, errors: errorsEn, pages: pagesEn, reviews: reviewsEn, qa: qaEn, collections: collectionsEn, search: searchEn, activity: activityEn, dashboard: dashboardEn, settings: settingsEn, graph: graphEn, notifications: notificationsEn },
+      ko: { common: commonKo, errors: errorsKo, pages: pagesKo, reviews: reviewsKo, qa: qaKo, collections: collectionsKo, search: searchKo, activity: activityKo, dashboard: dashboardKo, settings: settingsKo, graph: graphKo, notifications: notificationsKo },
     },
     defaultNS: 'common',
     fallbackLng: 'en',

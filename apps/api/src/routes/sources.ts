@@ -73,7 +73,7 @@ sourceRoutes.post('/upload', async (c) => {
 
   // Check for duplicate
   const existing = await db
-    .select({ id: sources.id })
+    .select({ id: sources.id, status: sources.status })
     .from(sources)
     .where(
       and(
@@ -85,6 +85,63 @@ sourceRoutes.post('/upload', async (c) => {
 
   const existingMatch = existing[0];
   if (existingMatch) {
+    if (existingMatch.status === 'failed') {
+      await db.transaction(async (tx) => {
+        await tx
+          .update(sources)
+          .set({
+            title: (body['title'] as string) || file.name,
+            rawMetadata: {
+              filename: file.name,
+              mimeType: file.type,
+              sizeBytes: file.size,
+              fileContent: buffer.toString('base64'),
+            },
+            ingestedBy: user.userId,
+            ingestedAt: new Date(),
+            contentText: null,
+            status: 'pending',
+          })
+          .where(
+            and(
+              eq(sources.id, existingMatch.id),
+              eq(sources.workspaceId, workspaceId),
+            ),
+          );
+
+        await tx.insert(activityEvents).values({
+          id: generateId(),
+          workspaceId,
+          eventType: 'ingest',
+          actorType: 'user',
+          actorId: user.userId,
+          targetType: 'source',
+          targetId: existingMatch.id,
+          detail: {
+            channel: 'web',
+            sourceType: 'file_upload',
+            filename: file.name,
+            retried: true,
+          },
+        });
+      });
+
+      await ingestQueue.add('parse', {
+        sourceId: existingMatch.id,
+        workspaceId,
+        filename: file.name,
+        mimeType: file.type,
+        rawFileContent: buffer.toString('base64'),
+      });
+
+      logger.info(
+        { sourceId: existingMatch.id, filename: file.name },
+        'Failed file upload re-enqueued for parsing',
+      );
+
+      return c.json({ id: existingMatch.id, retried: true }, 202);
+    }
+
     return c.json(
       { id: existingMatch.id, deduplicated: true },
       200,

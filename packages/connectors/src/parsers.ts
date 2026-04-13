@@ -30,7 +30,26 @@ import { readFile } from 'node:fs/promises';
  * @throws {ParseError} if the file exists but cannot be parsed.
  */
 export async function parseFile(filePath: string, mimeType: string): Promise<string> {
-  switch (mimeType) {
+  // Normalize MIME type and try extension-based fallback
+  let resolvedMimeType = mimeType.toLowerCase();
+
+  // If MIME type is empty or application/octet-stream, fall back to extension detection
+  if (!resolvedMimeType || resolvedMimeType === 'application/octet-stream') {
+    const ext = filePath.toLowerCase().split('.').pop() || '';
+    const extensionMap: Record<string, string> = {
+      pdf: 'application/pdf',
+      docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      doc: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      txt: 'text/plain',
+      md: 'text/markdown',
+      markdown: 'text/markdown',
+      html: 'text/html',
+      htm: 'text/html',
+    };
+    resolvedMimeType = extensionMap[ext] || resolvedMimeType;
+  }
+
+  switch (resolvedMimeType) {
     case 'application/pdf':
       return parsePdf(filePath);
 
@@ -45,7 +64,7 @@ export async function parseFile(filePath: string, mimeType: string): Promise<str
       return parseHtml(filePath);
 
     default:
-      throw new UnsupportedMimeTypeError(mimeType, filePath);
+      throw new UnsupportedMimeTypeError(resolvedMimeType, filePath);
   }
 }
 
