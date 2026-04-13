@@ -4,7 +4,6 @@ import { queues } from '../queues.js';
 import { db } from '@kaibase/db';
 import { sources, entities, concepts, activityEvents, workspaces } from '@kaibase/db';
 import {
-  OpenAIProvider,
   extractEntitiesPrompt,
   EXTRACT_ENTITIES_PROMPT_VERSION,
 } from '@kaibase/ai';
@@ -15,10 +14,11 @@ import type {
   ExtractedRelation,
   ExtractedRelationEvidence,
   ExtractedRelationNode,
-  LLMReasoningEffort,
 } from '@kaibase/ai';
 import { resolveLanguageFromText } from '@kaibase/shared';
 import type { EntityType } from '@kaibase/shared';
+import { getOrCreateProvider } from '../provider-cache.js';
+import { resolveAiConfig, applyPromptOverrides } from '../resolve-ai-config.js';
 import pino from 'pino';
 import {
   buildEntityTriplesMetadata,
@@ -26,22 +26,6 @@ import {
 } from './extract-entities.metadata.js';
 
 const logger = pino({ name: 'extract-entities-worker' });
-
-/** Lazily initialized LLM provider (fast/cheap tier for extraction). */
-let llm: OpenAIProvider | undefined;
-
-function getLLM(): OpenAIProvider {
-  if (!llm) {
-    llm = new OpenAIProvider({
-      apiKey: process.env['OPENAI_API_KEY'] ?? '',
-      model: process.env['EXTRACT_ENTITIES_MODEL'] ?? 'gpt-5.4-nano',
-    });
-  }
-  return llm;
-}
-
-const EXTRACT_ENTITIES_REASONING_EFFORT =
-  (process.env['EXTRACT_ENTITIES_REASONING'] as LLMReasoningEffort | undefined) ?? 'low';
 
 /** Maximum character length of source text sent to the LLM. */
 const MAX_SOURCE_CHARS = 100_000;
@@ -291,18 +275,21 @@ export async function processExtractEntitiesJob(job: Job): Promise<{ sourceId: s
         ? contentText.slice(0, MAX_SOURCE_CHARS)
         : contentText;
 
-    const messages = extractEntitiesPrompt({
+    // 4. Call LLM (with workspace-level config overrides)
+    const aiConfig = await resolveAiConfig('extract-entities', workspaceId);
+    const rawMessages = extractEntitiesPrompt({
       sourceText: truncatedText,
       sourceTitle: source.title ?? undefined,
       language,
       knownEntities: knownEntitiesInput,
     });
+    const messages = applyPromptOverrides(rawMessages, aiConfig);
 
-    // 4. Call LLM
-    const provider = getLLM();
+    const provider = getOrCreateProvider(aiConfig.model);
     const response = await provider.complete(messages, {
       jsonMode: true,
-      reasoningEffort: EXTRACT_ENTITIES_REASONING_EFFORT,
+      temperature: aiConfig.temperature,
+      reasoningEffort: aiConfig.reasoningEffort,
     });
 
     logger.info(

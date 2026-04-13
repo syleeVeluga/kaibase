@@ -3,43 +3,20 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '@kaibase/db';
 import { sources, activityEvents, workspaces } from '@kaibase/db';
 import {
-  OpenAIProvider,
   classifySourcePrompt,
   CLASSIFY_PROMPT_VERSION,
 } from '@kaibase/ai';
 import type {
   ClassifySourceInput,
   ClassifySourceResult,
-  LLMReasoningEffort,
 } from '@kaibase/ai';
 import { queues } from '../queues.js';
 import { resolveLanguageFromText } from '@kaibase/shared';
+import { getOrCreateProvider } from '../provider-cache.js';
+import { resolveAiConfig, applyPromptOverrides } from '../resolve-ai-config.js';
 import pino from 'pino';
 
 const logger = pino({ name: 'classify-worker' });
-
-/**
- * Lazy-initialized singleton LLM provider.
- * Uses the fast/cheap model tier for classification (GPT-4o-mini).
- */
-let llmInstance: OpenAIProvider | undefined;
-
-function getLLM(): OpenAIProvider {
-  if (!llmInstance) {
-    const apiKey = process.env['OPENAI_API_KEY'];
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is required');
-    }
-    llmInstance = new OpenAIProvider({
-      apiKey,
-      model: process.env['CLASSIFY_MODEL'] ?? 'gpt-5.4-mini',
-    });
-  }
-  return llmInstance;
-}
-
-const CLASSIFY_REASONING_EFFORT =
-  (process.env['CLASSIFY_REASONING'] as LLMReasoningEffort | undefined) ?? 'low';
 
 export async function processClassifyJob(job: Job): Promise<{ sourceId: string; classified: boolean; classification?: ClassifySourceResult; reason?: string }> {
     const { sourceId, workspaceId } = job.data as {
@@ -85,11 +62,14 @@ export async function processClassifyJob(job: Job): Promise<{ sourceId: string; 
       ),
     };
 
-    const messages = classifySourcePrompt(promptInput);
-    const llm = getLLM();
+    const aiConfig = await resolveAiConfig('classify', workspaceId);
+    const rawMessages = classifySourcePrompt(promptInput);
+    const messages = applyPromptOverrides(rawMessages, aiConfig);
+    const llm = getOrCreateProvider(aiConfig.model);
     const response = await llm.complete(messages, {
       jsonMode: true,
-      reasoningEffort: CLASSIFY_REASONING_EFFORT,
+      temperature: aiConfig.temperature,
+      reasoningEffort: aiConfig.reasoningEffort,
     });
 
     const classification = JSON.parse(response.content) as ClassifySourceResult;

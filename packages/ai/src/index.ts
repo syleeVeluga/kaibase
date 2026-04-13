@@ -1,3 +1,12 @@
+// Config resolver
+export {
+  resolvePromptConfig,
+  applyPromptOverrides,
+  getPromptFunctionDefaults,
+  FUNCTION_DEFAULTS,
+} from './config/index.js';
+export type { ResolvedPromptConfig, AiPromptConfigRow } from './config/index.js';
+
 // Provider adapters and core types
 export type {
   LLMMessage,

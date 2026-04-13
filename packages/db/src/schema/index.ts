@@ -37,3 +37,6 @@ export * from './compilation-trace.js';
 
 // Saved queries / digests
 export * from './saved-query.js';
+
+// AI prompt configuration overrides
+export * from './ai-config.js';

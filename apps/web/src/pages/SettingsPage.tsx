@@ -30,6 +30,15 @@ export function SettingsPage(): React.ReactElement {
         </Link>
       </section>
       <hr className={styles.divider} />
+      <section>
+        <h2 className={styles.sectionHeading}>
+          {t('settings:promptStudio.title')}
+        </h2>
+        <Link to="/settings/ai-prompts" className={shared.primaryButton}>
+          {t('settings:promptStudio.title')}
+        </Link>
+      </section>
+      <hr className={styles.divider} />
       <AccountSettings />
     </div>
   );

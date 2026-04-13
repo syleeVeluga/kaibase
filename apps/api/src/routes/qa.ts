@@ -20,20 +20,19 @@ import {
 import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import {
   answerQuestionPrompt,
+  resolvePromptConfig,
+  applyPromptOverrides,
   type AnswerQuestionResult,
   type AnswerContextPage,
-  type LLMReasoningEffort,
 } from '@kaibase/ai';
+import { aiPromptConfigs } from '@kaibase/db/schema';
 import { PolicyEngine } from '@kaibase/policy';
-import { getEmbeddingProvider, getQALLM as getLLM } from '../providers.js';
+import { getEmbeddingProvider, getOrCreateQAProvider } from '../providers.js';
 import { compileQueue } from '../queues.js';
 import { logger } from '../logger.js';
 import type { AppEnv } from '../types.js';
 
 export const qaRoutes = new Hono<AppEnv>();
-
-const QA_REASONING_EFFORT =
-  (process.env['QA_REASONING'] as LLMReasoningEffort | undefined) ?? 'medium';
 
 qaRoutes.use('*', authMiddleware());
 qaRoutes.use('*', workspaceMiddleware());
@@ -102,20 +101,33 @@ qaRoutes.post('/ask', zValidator('json', askQuestionSchema), async (c) => {
     if (contextPages.length >= 5) break;
   }
 
-  // 3. Call LLM to generate answer
-  const messages = answerQuestionPrompt({
+  // 3. Resolve workspace-level AI config and call LLM
+  const configRows = await db
+    .select()
+    .from(aiPromptConfigs)
+    .where(
+      and(
+        eq(aiPromptConfigs.workspaceId, workspaceId),
+        eq(aiPromptConfigs.functionId, 'answer-question'),
+      ),
+    )
+    .limit(1);
+  const aiConfig = resolvePromptConfig('answer-question', configRows[0] ?? null);
+
+  const rawMessages = answerQuestionPrompt({
     question,
     language: detectedLang,
     contextPages,
   });
+  const messages = applyPromptOverrides(rawMessages, aiConfig);
 
   let llmResponse;
   try {
-    llmResponse = await getLLM().complete(messages, {
+    llmResponse = await getOrCreateQAProvider(aiConfig.model).complete(messages, {
       jsonMode: true,
-      temperature: 0.3,
+      temperature: aiConfig.temperature ?? 0.3,
       maxTokens: 2000,
-      reasoningEffort: QA_REASONING_EFFORT,
+      reasoningEffort: aiConfig.reasoningEffort,
     });
   } catch (err) {
     logger.error({ err }, 'LLM call failed');

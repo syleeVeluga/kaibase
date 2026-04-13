@@ -17,7 +17,6 @@ import {
   getCollectionTypeForPageType,
 } from '@kaibase/db';
 import {
-  OpenAIProvider,
   createPagePrompt,
   CREATE_PAGE_PROMPT_VERSION,
 } from '@kaibase/ai';
@@ -25,7 +24,6 @@ import type {
   CreatePageInput,
   CreatePageSource,
   CreatePageResult,
-  LLMReasoningEffort,
   LLMResponse,
 } from '@kaibase/ai';
 import { PolicyEngine } from '@kaibase/policy';
@@ -35,32 +33,12 @@ import {
   resolveLanguageFromText,
 } from '@kaibase/shared';
 import { queues } from '../queues.js';
+import { getOrCreateProvider } from '../provider-cache.js';
+import { resolveAiConfig, applyPromptOverrides } from '../resolve-ai-config.js';
 import pino from 'pino';
 
 const logger = pino({ name: 'page-create-worker' });
 
-// ---------------------------------------------------------------------------
-// LLM provider — lazy singleton (capable model tier for page creation)
-// ---------------------------------------------------------------------------
-
-let llmInstance: OpenAIProvider | undefined;
-
-function getLLM(): OpenAIProvider {
-  if (!llmInstance) {
-    const apiKey = process.env['OPENAI_API_KEY'];
-    if (!apiKey) {
-      throw new Error('OPENAI_API_KEY environment variable is required');
-    }
-    llmInstance = new OpenAIProvider({
-      apiKey,
-      model: process.env['PAGE_CREATE_MODEL'] ?? 'gpt-5.4',
-    });
-  }
-  return llmInstance;
-}
-
-const PAGE_CREATE_REASONING_EFFORT =
-  (process.env['PAGE_CREATE_REASONING'] as LLMReasoningEffort | undefined) ?? 'medium';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -349,11 +327,14 @@ export async function processPageCreateJob(job: Job): Promise<Record<string, unk
       workspaceContext,
     };
 
-    const messages = createPagePrompt(promptInput);
-    const llm = getLLM();
+    const aiConfig = await resolveAiConfig('create-page', workspaceId);
+    const rawMessages = createPagePrompt(promptInput);
+    const messages = applyPromptOverrides(rawMessages, aiConfig);
+    const llm = getOrCreateProvider(aiConfig.model);
     const response: LLMResponse = await llm.complete(messages, {
       jsonMode: true,
-      reasoningEffort: PAGE_CREATE_REASONING_EFFORT,
+      temperature: aiConfig.temperature,
+      reasoningEffort: aiConfig.reasoningEffort,
     });
 
     const result = JSON.parse(response.content) as CreatePageResult;

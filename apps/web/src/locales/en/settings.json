@@ -29,6 +29,57 @@
     "active": "Active",
     "inactive": "Inactive"
   },
+  "promptStudio": {
+    "title": "AI Prompt Studio",
+    "description": "Configure AI behavior for each pipeline function",
+    "pipeline": {
+      "title": "Processing Pipeline",
+      "parse": "Parse",
+      "classify": "Classify",
+      "summarize": "Summarize",
+      "extractEntities": "Extract Entities",
+      "createPage": "Create Page",
+      "embedding": "Embedding",
+      "answerQuestion": "Answer Question"
+    },
+    "functions": {
+      "classify": { "name": "Classify" },
+      "summarize": { "name": "Summarize" },
+      "extract-entities": { "name": "Extract Entities" },
+      "create-page": { "name": "Create Page" },
+      "answer-question": { "name": "Answer Question" }
+    },
+    "fields": {
+      "model": "Model",
+      "temperature": "Temperature",
+      "reasoningEffort": "Reasoning Effort",
+      "systemPrompt": "System Prompt",
+      "userPrompt": "User Prompt Template",
+      "systemPromptPlaceholder": "Override the system prompt (leave empty to use default)",
+      "userPromptPlaceholder": "Override the user prompt template (leave empty to use default)"
+    },
+    "actions": {
+      "edit": "Edit",
+      "resetToDefault": "Reset to Default"
+    },
+    "status": {
+      "customized": "Customized",
+      "default": "Default",
+      "saved": "Configuration saved",
+      "reset": "Reset to default"
+    },
+    "variables": {
+      "title": "Available Variables"
+    },
+    "reasoningLevels": {
+      "none": "None",
+      "minimal": "Minimal",
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "xhigh": "Extra High"
+    }
+  },
   "policy": {
     "title": "Policy Rules",
     "edit": "Edit Rules",

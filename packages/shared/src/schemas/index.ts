@@ -72,3 +72,10 @@ export {
   type CreateTemplateInput,
   type UpdateTemplateInput,
 } from './template.schema.js';
+
+export {
+  aiPromptFunctionIdSchema,
+  aiReasoningEffortSchema,
+  upsertAiPromptConfigSchema,
+  type UpsertAiPromptConfigInput,
+} from './ai-config.schema.js';

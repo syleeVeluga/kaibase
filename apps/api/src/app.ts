@@ -16,6 +16,7 @@ import { qaRoutes } from './routes/qa.js';
 import { searchRoutes } from './routes/search.js';
 import { activityRoutes } from './routes/activity.js';
 import { templateRoutes } from './routes/templates.js';
+import { aiConfigRoutes } from './routes/ai-config.js';
 import { dashboardRoutes } from './routes/dashboard.js';
 
 export const app = new Hono();
@@ -46,4 +47,5 @@ app.route('/api/v1/workspaces/:wid/qa', qaRoutes);
 app.route('/api/v1/workspaces/:wid/search', searchRoutes);
 app.route('/api/v1/workspaces/:wid/activity', activityRoutes);
 app.route('/api/v1/workspaces/:wid/templates', templateRoutes);
+app.route('/api/v1/workspaces/:wid/ai-config', aiConfigRoutes);
 app.route('/api/v1/workspaces/:wid/dashboard', dashboardRoutes);

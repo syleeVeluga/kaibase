@@ -1,7 +1,9 @@
 import { EmbeddingProvider, OpenAIProvider } from '@kaibase/ai';
 
 let embeddingProvider: EmbeddingProvider | undefined;
-let qaLlmProvider: OpenAIProvider | undefined;
+
+/** Model-keyed cache for QA LLM providers. */
+const qaProviderCache = new Map<string, OpenAIProvider>();
 
 export function getEmbeddingProvider(): EmbeddingProvider {
   if (!embeddingProvider) {
@@ -12,12 +14,18 @@ export function getEmbeddingProvider(): EmbeddingProvider {
   return embeddingProvider;
 }
 
-export function getQALLM(): OpenAIProvider {
-  if (!qaLlmProvider) {
-    qaLlmProvider = new OpenAIProvider({
+/**
+ * Get or create an OpenAI provider for the given model.
+ * Supports per-workspace model overrides from the AI Prompt Studio.
+ */
+export function getOrCreateQAProvider(model: string): OpenAIProvider {
+  let provider = qaProviderCache.get(model);
+  if (!provider) {
+    provider = new OpenAIProvider({
       apiKey: process.env['OPENAI_API_KEY'] ?? '',
-      model: process.env['QA_MODEL'] ?? 'gpt-5.4',
+      model,
     });
+    qaProviderCache.set(model, provider);
   }
-  return qaLlmProvider;
+  return provider;
 }

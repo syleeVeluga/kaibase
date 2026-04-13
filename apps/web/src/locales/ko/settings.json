@@ -29,6 +29,57 @@
     "active": "활성",
     "inactive": "비활성"
   },
+  "promptStudio": {
+    "title": "AI 프롬프트 스튜디오",
+    "description": "파이프라인 기능별 AI 동작을 설정합니다",
+    "pipeline": {
+      "title": "처리 파이프라인",
+      "parse": "파싱",
+      "classify": "분류",
+      "summarize": "요약",
+      "extractEntities": "엔티티 추출",
+      "createPage": "페이지 생성",
+      "embedding": "임베딩",
+      "answerQuestion": "질문 답변"
+    },
+    "functions": {
+      "classify": { "name": "분류" },
+      "summarize": { "name": "요약" },
+      "extract-entities": { "name": "엔티티 추출" },
+      "create-page": { "name": "페이지 생성" },
+      "answer-question": { "name": "질문 답변" }
+    },
+    "fields": {
+      "model": "모델",
+      "temperature": "온도",
+      "reasoningEffort": "추론 수준",
+      "systemPrompt": "시스템 프롬프트",
+      "userPrompt": "사용자 프롬프트 템플릿",
+      "systemPromptPlaceholder": "시스템 프롬프트를 오버라이드합니다 (비워두면 기본값 사용)",
+      "userPromptPlaceholder": "사용자 프롬프트 템플릿을 오버라이드합니다 (비워두면 기본값 사용)"
+    },
+    "actions": {
+      "edit": "편집",
+      "resetToDefault": "기본값으로 초기화"
+    },
+    "status": {
+      "customized": "커스텀",
+      "default": "기본",
+      "saved": "설정이 저장되었습니다",
+      "reset": "기본값으로 초기화됨"
+    },
+    "variables": {
+      "title": "사용 가능한 변수"
+    },
+    "reasoningLevels": {
+      "none": "없음",
+      "minimal": "최소",
+      "low": "낮음",
+      "medium": "보통",
+      "high": "높음",
+      "xhigh": "매우 높음"
+    }
+  },
   "policy": {
     "title": "정책 규칙",
     "edit": "규칙 편집",

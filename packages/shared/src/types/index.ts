@@ -29,3 +29,10 @@ export type {
 export type { ActivityEventType, ActorType, ActivityEvent } from './activity.js';
 export type { GraphNodeType, GraphEdgeType, GraphNode, GraphEdge } from './graph.js';
 export type { ChannelType, ChannelDirection, ChannelEndpoint } from './notification.js';
+export type {
+  AiPromptFunctionId,
+  AiReasoningEffort,
+  AiPromptConfig,
+  AiPromptFunctionDefault,
+  AiPromptConfigMerged,
+} from './ai-config.js';

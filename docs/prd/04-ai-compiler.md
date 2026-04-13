@@ -374,3 +374,4 @@ interface TraceDecision {
 - [PRD-05: Policy Engine](./05-policy-engine.md) — Rules governing AI actions
 - [PRD-07: Q&A Service](./07-qa-service.md) — Q&A API design
 - [PRD-10: Activity Log](./10-activity-log.md) — AI action logging
+- [PRD-16: AI Prompt Studio](./16-ai-prompt-studio.md) — Per-workspace AI prompt/model configuration UI

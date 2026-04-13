@@ -19,6 +19,7 @@ import { SearchPage } from './pages/SearchPage.js';
 import { ActivityPage } from './pages/ActivityPage.js';
 import { DashboardPage } from './pages/DashboardPage.js';
 import { TemplatesPage } from './pages/TemplatesPage.js';
+import { AiPromptStudioPage } from './pages/AiPromptStudioPage.js';
 
 export function App(): React.ReactElement {
   return (
@@ -50,6 +51,7 @@ export function App(): React.ReactElement {
                 <Route path="sources" element={<RequireWorkspacePage><SourcesPage /></RequireWorkspacePage>} />
                 <Route path="settings" element={<RequireWorkspacePage><SettingsPage /></RequireWorkspacePage>} />
                 <Route path="settings/templates" element={<RequireWorkspacePage><TemplatesPage /></RequireWorkspacePage>} />
+              <Route path="settings/ai-prompts" element={<RequireWorkspacePage><AiPromptStudioPage /></RequireWorkspacePage>} />
               </Route>
 
               {/* Catch-all */}

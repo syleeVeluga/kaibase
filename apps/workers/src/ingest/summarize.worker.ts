@@ -3,31 +3,16 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '@kaibase/db';
 import { sources, activityEvents, workspaces } from '@kaibase/db';
 import {
-  OpenAIProvider,
   summarizeSourcePrompt,
   SUMMARIZE_PROMPT_VERSION,
 } from '@kaibase/ai';
-import type { LLMReasoningEffort, SummarizeSourceResult } from '@kaibase/ai';
+import type { SummarizeSourceResult } from '@kaibase/ai';
 import { resolveLanguageFromText } from '@kaibase/shared';
+import { getOrCreateProvider } from '../provider-cache.js';
+import { resolveAiConfig, applyPromptOverrides } from '../resolve-ai-config.js';
 import pino from 'pino';
 
 const logger = pino({ name: 'summarize-worker' });
-
-/** Lazily initialized LLM provider (one per worker process). */
-let llm: OpenAIProvider | undefined;
-
-function getLLM(): OpenAIProvider {
-  if (!llm) {
-    llm = new OpenAIProvider({
-      apiKey: process.env['OPENAI_API_KEY'] ?? '',
-      model: process.env['SUMMARIZE_MODEL'] ?? 'gpt-5.4',
-    });
-  }
-  return llm;
-}
-
-const SUMMARIZE_REASONING_EFFORT =
-  (process.env['SUMMARIZE_REASONING'] as LLMReasoningEffort | undefined) ?? 'medium';
 
 /** Maximum character length of source text sent to the LLM. */
 const MAX_SOURCE_CHARS = 100_000;
@@ -82,17 +67,20 @@ export async function processSummarizeJob(job: Job): Promise<{ sourceId: string;
         ? contentText.slice(0, MAX_SOURCE_CHARS)
         : contentText;
 
-    // 3. Build prompt and call LLM
-    const messages = summarizeSourcePrompt({
+    // 3. Build prompt and call LLM (with workspace-level config overrides)
+    const aiConfig = await resolveAiConfig('summarize', workspaceId);
+    const rawMessages = summarizeSourcePrompt({
       sourceText: truncatedText,
       sourceTitle: source.title ?? undefined,
       language,
     });
+    const messages = applyPromptOverrides(rawMessages, aiConfig);
 
-    const provider = getLLM();
+    const provider = getOrCreateProvider(aiConfig.model);
     const response = await provider.complete(messages, {
       jsonMode: true,
-      reasoningEffort: SUMMARIZE_REASONING_EFFORT,
+      temperature: aiConfig.temperature,
+      reasoningEffort: aiConfig.reasoningEffort,
     });
 
     logger.info(
